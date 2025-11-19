@@ -43,31 +43,37 @@
         .room-item:hover { background-color: var(--bg); }
         .room-item-name { font-weight: 600; }
         .room-item-players { font-size: 0.9rem; color: #64748b; }
+        /* Make cards use full available width and include box-sizing for predictable layouts */
+        .card { box-sizing: border-box; width: 100%; }
 
-        /* Responsive Design */
-        @media (max-width: 480px) {
-            .container {
-                padding: 10px;
-            }
-            .card {
-                padding: 1.5rem;
-            }
-            h1 {
-                font-size: 2rem;
-            }
-            h2 {
-                font-size: 1.5rem;
-            }
-            .cell {
-                font-size: 2.5rem;
-            }
-            .code-display {
-                font-size: 1.5rem;
-            }
-            button {
-                padding: 0.9rem;
-                font-size: 0.9rem;
-            }
+        /* Board defaults: allow cells to remain square and grow/shrink with container */
+        .board { width: 100%; grid-auto-rows: 1fr; }
+        .board .cell { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+
+        /* Responsive Design: tablets and small desktops */
+        @media (max-width: 768px) {
+            .container { max-width: 420px; padding: 12px; }
+            .card { padding: 1.25rem; border-radius: 0.9rem; }
+            .board { gap: 0.6rem; padding: 0.6rem; }
+            .cell { font-size: clamp(24px, 6vmin, 40px); }
+            button { padding: 0.9rem; font-size: 0.95rem; }
+        }
+
+        /* Responsive Design: phones (including iPhone 13 width ~390px) */
+        @media (max-width: 420px) {
+            .container { padding: 10px; max-width: 100%; }
+            .card { padding: 0.9rem; border-radius: 0.75rem; }
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.2rem; }
+            .board { gap: 0.4rem; padding: 0.4rem; }
+            .board { grid-template-columns: repeat(3, 1fr); }
+            .cell { font-size: clamp(20px, 8vmin, 34px); border-radius: 0.45rem; }
+            .code-display { font-size: 1.2rem; }
+            .status-badge { padding: 0.35rem 0.9rem; font-size: 0.9rem; }
+            #game-status { font-size: 1rem; }
+            .room-item { padding: 0.5rem; }
+            /* Increase target size for tap-friendly controls */
+            button { padding: 0.85rem; font-size: 0.95rem; }
         }
     </style>
 </head>
