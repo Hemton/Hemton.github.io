@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - The Hexas</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #e11d48;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 { margin-bottom: 0.5rem; }
+        .subtitle { color: #64748b; margin-bottom: 2rem; }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: transparent; border: 2px solid #e2e8f0; color: var(--text); }
+        .btn-danger { background: #334155; color: white; width: auto; padding: 0.75rem 1.5rem; margin-top: 1rem; }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+
+        /* Game Board */
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            background: #e2e8f0;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .cell {
+            background: white;
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 3rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell.X { color: var(--primary); }
+        .cell.O { color: var(--secondary); }
+        .cell:disabled { cursor: default; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: #e0e7ff;
+            color: var(--primary);
+            border-radius: 999px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .hidden { display: none; }
+        .error { color: var(--secondary); margin-bottom: 1rem; font-size: 0.9rem; }
+        .code-display { font-family: monospace; font-size: 2rem; font-weight: bold; margin: 1rem 0; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- MENU View -->
+        <div id="view-menu" class="card">
+            <h1>Tic Tac Toe</h1>
+            <p class="subtitle">www.thehexas.com</p>
+            <button class="btn-primary" onclick="createRoom()">Create Room</button>
+            <button class="btn-secondary" onclick="switchView('join')">Join Room</button>
+        </div>
+
+        <!-- JOIN View -->
+        <div id="view-join" class="card hidden">
+            <h2>Join Game</h2>
+            <p class="subtitle">Enter the code</p>
+            <input type="text" id="join-code-input" placeholder="XXX-XX-XXX">
+            <div id="join-error" class="error"></div>
+            <button class="btn-primary" onclick="joinRoom()">Join</button>
+            <button class="btn-secondary" onclick="switchView('menu')">Back</button>
+        </div>
+
+        <!-- LOBBY View -->
+        <div id="view-lobby" class="card hidden">
+            <h2>Room Created</h2>
+            <div class="code-display" id="lobby-code">...</div>
+            <p class="subtitle">Share this code with your friend.</p>
+            <div class="status-badge">Waiting for opponent...</div>
+            <button class="btn-secondary" onclick="location.reload()">Cancel</button>
+        </div>
+
+        <!-- GAME View -->
+        <div id="view-game" class="card hidden">
+            <div id="game-status" class="status-badge">Connecting...</div>
+            
+            <div class="board" id="board">
+                <!-- Cells generated by JS -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #64748b;">
+                <span id="p1-indicator">Player 1 (X)</span>
+                <span id="p2-indicator">Player 2 (O)</span>
+            </div>
+
+            <div id="game-controls" class="hidden">
+                <button class="btn-danger" onclick="resetGame()">Play Again</button>
+            </div>
+            
+            <div class="mt-4 text-xs text-gray-400">
+                Room: <span id="game-room-code"></span>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // --- FIREBASE CONFIGURATION ---
+        // TODO: For GitHub Pages, replace the code below with your own config from Firebase Console
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "YOUR_API_KEY_HERE",
+            authDomain: "your-project.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abc123def456"
+        };
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- STATE & VARIABLES ---
+        let currentUser = null;
+        let currentRoom = null;
+        let gameData = null;
+        let unsubscribeGame = null;
+
+        // --- AUTHENTICATION ---
+        // Initialize auth immediately
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        // Try default environment auth first
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (e) {
+                        console.warn("Custom token failed (likely config mismatch), falling back to anonymous auth");
+                        // If that fails (e.g. you changed the config), fallback to anonymous
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth Error:", error);
+                // Only alert if BOTH methods fail
+                alert("Could not connect to game server. Please refresh.");
+            }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                console.log("Logged in as:", user.uid);
+            }
+        });
+
+        // --- UI FUNCTIONS ---
+        window.switchView = (viewName) => {
+            ['menu', 'join', 'lobby', 'game'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+            });
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+        }
+
+        // --- GAME LOGIC HELPERS ---
+        const generateRoomCode = () => {
+            const digits = Math.floor(10000000 + Math.random() * 90000000).toString();
+            return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5, 8)}`;
+        };
+
+        const checkWinner = (board) => {
+            const wins = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            for (let [a, b, c] of wins) {
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
+            }
+            return board.includes(null) ? null : 'DRAW';
+        };
+
+        // --- CORE ACTIONS ---
+
+        window.createRoom = async () => {
+            if (!currentUser) return alert("Connecting... please wait");
+            
+            const code = generateRoomCode();
+            // Path: /artifacts/{appId}/public/data/rooms/room_{code}
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`);
+
+            const initialData = {
+                board: Array(9).fill(null),
+                turn: 'X',
+                status: 'waiting',
+                winner: null,
+                playerX: currentUser.uid,
+                playerO: null,
+                createdAt: Date.now()
+            };
+
+            try {
+                await setDoc(roomRef, initialData);
+                currentRoom = code;
+                document.getElementById('lobby-code').textContent = code;
+                switchView('lobby');
+                startGameListener(code);
+            } catch (e) {
+                console.error(e);
+                alert("Error creating room. Check permissions or connection.");
+            }
+        };
+
+        window.joinRoom = async () => {
+            if (!currentUser) return alert("Connecting... please wait");
+            
+            const codeInput = document.getElementById('join-code-input');
+            const code = codeInput.value.toUpperCase().trim();
+            
+            if (code.length < 8) {
+                document.getElementById('join-error').textContent = "Invalid Code Format";
+                return;
+            }
+
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`);
+
+            try {
+                const snapshot = await getDoc(roomRef);
+                if (!snapshot.exists()) {
+                    document.getElementById('join-error').textContent = "Room not found";
+                    return;
+                }
+
+                const data = snapshot.data();
+                
+                // Check if room is full or user is rejoining
+                if (data.playerX !== currentUser.uid && data.playerO && data.playerO !== currentUser.uid) {
+                    document.getElementById('join-error').textContent = "Room is full";
+                    return;
+                }
+
+                // Join as O if slot is empty and I'm not X
+                if (!data.playerO && data.playerX !== currentUser.uid) {
+                    await updateDoc(roomRef, {
+                        playerO: currentUser.uid,
+                        status: 'playing'
+                    });
+                }
+
+                currentRoom = code;
+                switchView('game');
+                startGameListener(code);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('join-error').textContent = "Connection failed";
+            }
+        };
+
+        window.makeMove = async (index) => {
+            if (!gameData || !currentUser) return;
+            
+            // Determine my symbol
+            let mySymbol = null;
+            if (gameData.playerX === currentUser.uid) mySymbol = 'X';
+            else if (gameData.playerO === currentUser.uid) mySymbol = 'O';
+            else return; // Spectator
+
+            // Rules
+            if (gameData.status !== 'playing') return;
+            if (gameData.turn !== mySymbol) return;
+            if (gameData.board[index]) return;
+
+            // Apply move
+            const newBoard = [...gameData.board];
+            newBoard[index] = mySymbol;
+            
+            const winner = checkWinner(newBoard);
+            const nextTurn = mySymbol === 'X' ? 'O' : 'X';
+
+            const updates = {
+                board: newBoard,
+                turn: nextTurn
+            };
+
+            if (winner) {
+                updates.status = 'finished';
+                updates.winner = winner;
+            }
+
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
+            await updateDoc(roomRef, updates);
+        };
+
+        window.resetGame = async () => {
+            if (!currentRoom || gameData.status !== 'finished') return;
+            
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
+            await updateDoc(roomRef, {
+                board: Array(9).fill(null),
+                turn: 'X',
+                status: 'playing',
+                winner: null
+            });
+        };
+
+        // --- REAL-TIME LISTENER ---
+        function startGameListener(code) {
+            if (unsubscribeGame) unsubscribeGame();
+
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`);
+            
+            unsubscribeGame = onSnapshot(roomRef, (docSnap) => {
+                if (!docSnap.exists()) {
+                    alert("Room deleted");
+                    location.reload();
+                    return;
+                }
+
+                gameData = docSnap.data();
+                updateUI(gameData);
+
+                // Auto-switch lobby -> game
+                if (gameData.status === 'playing' && !document.getElementById('view-lobby').classList.contains('hidden')) {
+                    switchView('game');
+                }
+            });
+        }
+
+        function updateUI(data) {
+            document.getElementById('game-room-code').textContent = currentRoom;
+
+            // Determine roles
+            const isPlayerX = data.playerX === currentUser?.uid;
+            const isPlayerO = data.playerO === currentUser?.uid;
+            let mySymbol = isPlayerX ? 'X' : (isPlayerO ? 'O' : null);
+
+            // Update Board
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            data.board.forEach((cell, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `cell ${cell || ''}`;
+                btn.textContent = cell || '';
+                btn.disabled = !!cell || data.status !== 'playing' || data.turn !== mySymbol;
+                btn.onclick = () => makeMove(idx);
+                boardEl.appendChild(btn);
+            });
+
+            // Update Status Text
+            const statusEl = document.getElementById('game-status');
+            if (data.status === 'finished') {
+                statusEl.style.background = '#f1f5f9';
+                statusEl.style.color = '#334155';
+                if (data.winner === 'DRAW') statusEl.textContent = "It's a Draw!";
+                else statusEl.textContent = data.winner === mySymbol ? "You Won!" : "You Lost!";
+                document.getElementById('game-controls').classList.remove('hidden');
+            } else if (data.status === 'playing') {
+                const isMyTurn = data.turn === mySymbol;
+                statusEl.textContent = isMyTurn ? `Your Turn (${mySymbol})` : `Opponent's Turn (${data.turn})`;
+                statusEl.style.background = isMyTurn ? '#e0e7ff' : '#f1f5f9';
+                statusEl.style.color = isMyTurn ? '#4f46e5' : '#64748b';
+                document.getElementById('game-controls').classList.add('hidden');
+            } else {
+                statusEl.textContent = "Waiting for opponent...";
+            }
+        }
+    </script>
+</body>
+</html>
