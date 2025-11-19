@@ -50,7 +50,12 @@
     </div>
 
     <div class="container">
-        <div id="view-menu" class="card">
+        <div id="view-name" class="card">
+            <h2>Enter Your Name</h2>
+            <input type="text" id="name-input" placeholder="Your Name">
+            <button class="btn-primary" onclick="setPlayerName()">Continue</button>
+        </div>
+        <div id="view-menu" class="card hidden">
             <h1>Tic Tac Toe</h1>
             <p class="subtitle">www.thehexas.com</p>
             <button class="btn-primary" onclick="createRoom()">Create Room</button>
@@ -74,12 +79,17 @@
         <div id="view-game" class="card hidden">
             <div id="game-status" class="status-badge">Connecting...</div>
             <div class="board" id="board"></div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #64748b;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #64748b; margin-top: 1rem;">
                 <span id="p1-indicator">Player 1 (X)</span>
                 <span id="p2-indicator">Player 2 (O)</span>
             </div>
+            <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold;">
+                <span id="p1-score">0</span>
+                <span id="p2-score">0</span>
+            </div>
             <div id="game-controls" class="hidden">
                 <button class="btn-danger" onclick="resetGame()">Play Again</button>
+                <p id="rematch-status" style="margin-top: 1rem; color: #64748b;"></p>
             </div>
             <div class="mt-4 text-xs text-gray-400">Room: <span id="game-room-code"></span></div>
         </div>
@@ -87,9 +97,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
         function log(msg, type = 'info') {
             const logDiv = document.getElementById('debug-log');
@@ -113,13 +123,14 @@
         if (typeof __firebase_config !== 'undefined') {
             firebaseConfig = JSON.parse(__firebase_config);
         } else {
-            const firebaseConfig = {
-                apiKey: "AIzaSyD-example-key-12345",
-                authDomain: "tic-tac-toe-game.firebaseapp.com",
-                projectId: "tic-tac-toe-game",
-                storageBucket: "tic-tac-toe-game.appspot.com",
-                messagingSenderId: "8492018402",
-                appId: "1:8492018402:web:7321638"
+            firebaseConfig = {
+                apiKey: "AIzaSyDk8eVrKZSXbCDE1QdmpMZ6y9PgBtYlK4I",
+                authDomain: "tic-tac-toe-41a5c.firebaseapp.com",
+                projectId: "tic-tac-toe-41a5c",
+                storageBucket: "tic-tac-toe-41a5c.firebasestorage.app",
+                messagingSenderId: "17510786092",
+                appId: "1:17510786092:web:5734cd305289b0b3d99d89",
+                measurementId: "G-8GTZKD290J"
             };
         }
 
@@ -128,7 +139,7 @@
         // =================================================================================
 
         // Check if user has pasted config (Only checks if we are falling back to the manual object)
-        if (typeof __firebase_config === 'undefined' && (firebaseConfig.apiKey.includes("REPLACE_THIS") || firebaseConfig.apiKey === "YOUR_API_KEY_HERE")) {
+        if (typeof __firebase_config === 'undefined' && (firebaseConfig.apiKey.includes("REPLACE_THIS"))) {
             document.getElementById('config-modal').style.display = 'flex';
             log("CRITICAL: Config Missing. Blocking App.", 'error');
             throw new Error("App Config Missing: Edit index.html line 112");
@@ -148,6 +159,7 @@
         let currentRoom = null;
         let gameData = null;
         let unsubscribeGame = null;
+        let currentPlayerName = null;
 
         const initAuth = async () => {
             try {
@@ -169,12 +181,27 @@
 
         onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; log(`User: ${user.uid.slice(0,5)}...`); } });
 
-        window.switchView = (v) => {
-            ['menu', 'join', 'lobby', 'game'].forEach(id => document.getElementById(`view-${id}`).classList.add('hidden'));
+        window.createRoom = createRoom;
+        window.joinRoom = joinRoom;
+        window.switchView = switchView;
+        window.makeMove = makeMove;
+        window.resetGame = resetGame;
+        window.setPlayerName = setPlayerName;
+
+        function setPlayerName() {
+            const name = document.getElementById('name-input').value.trim();
+            if (name) {
+                currentPlayerName = name;
+                switchView('menu');
+            }
+        }
+
+        function switchView(v) {
+            ['name', 'menu', 'join', 'lobby', 'game'].forEach(id => document.getElementById(`view-${id}`).classList.add('hidden'));
             document.getElementById(`view-${v}`).classList.remove('hidden');
         }
 
-        window.createRoom = async () => {
+        async function createRoom() {
             if (!currentUser) { log("Wait for login...", 'error'); return; }
             const code = Math.floor(10000000 + Math.random() * 90000000).toString();
             const formattedCode = `${code.slice(0,3)}-${code.slice(3,5)}-${code.slice(5,8)}`;
@@ -184,7 +211,10 @@
                 // Path: artifacts/{appId}/public/data/rooms/room_{code}
                 await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${formattedCode}`), {
                     board: Array(9).fill(null), turn: 'X', status: 'waiting', winner: null,
-                    playerX: currentUser.uid, playerO: null, createdAt: Date.now()
+                    playerX: currentUser.uid, playerO: null, createdAt: Date.now(),
+                    playerXWantsRematch: false, playerOWantsRematch: false,
+                    playerXName: currentPlayerName, playerOName: null,
+                    playerXWins: 0, playerOWins: 0
                 });
                 currentRoom = formattedCode;
                 document.getElementById('lobby-code').textContent = formattedCode;
@@ -198,7 +228,7 @@
             }
         };
 
-        window.joinRoom = async () => {
+        async function joinRoom() {
             if (!currentUser) return;
             const code = document.getElementById('join-code-input').value.toUpperCase().trim();
             if (code.length < 8) { log("Invalid Code", 'error'); return; }
@@ -214,7 +244,9 @@
                 if (data.playerX !== currentUser.uid && data.playerO && data.playerO !== currentUser.uid) { log("Room Full", 'error'); return; }
                 
                 if (!data.playerO && data.playerX !== currentUser.uid) {
-                    await updateDoc(roomRef, { playerO: currentUser.uid, status: 'playing' });
+                    await updateDoc(roomRef, { playerO: currentUser.uid, status: 'playing', playerOName: currentPlayerName });
+                } else if (data.playerX === currentUser.uid && !data.playerXName) {
+                    await updateDoc(roomRef, { playerXName: currentPlayerName });
                 }
                 currentRoom = code;
                 switchView('game');
@@ -222,7 +254,7 @@
             } catch (e) { log(`Join Failed: ${e.message}`, 'error'); }
         };
 
-        window.makeMove = async (idx) => {
+        async function makeMove(idx) {
             if (!gameData || !currentUser || gameData.status !== 'playing') return;
             const isX = gameData.playerX === currentUser.uid;
             const isO = gameData.playerO === currentUser.uid;
@@ -238,14 +270,42 @@
             if(!winner && !newBoard.includes(null)) winner = 'DRAW';
 
             const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
-            await updateDoc(roomRef, { board: newBoard, turn: mySym==='X'?'O':'X', status: winner?'finished':'playing', winner: winner || null });
+            const updates = { board: newBoard, turn: mySym==='X'?'O':'X', status: winner?'finished':'playing', winner: winner || null, playerXWantsRematch: false, playerOWantsRematch: false };
+
+            if (winner === 'X') {
+                updates.playerXWins = (gameData.playerXWins || 0) + 1;
+            } else if (winner === 'O') {
+                updates.playerOWins = (gameData.playerOWins || 0) + 1;
+            }
+
+            await updateDoc(roomRef, updates);
         };
 
-        window.resetGame = async () => {
-            if (!currentRoom) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`), {
-                board: Array(9).fill(null), turn: 'X', status: 'playing', winner: null
-            });
+        async function resetGame() {
+            if (!currentRoom || !currentUser) return;
+
+            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
+            const roomSnap = await getDoc(roomRef);
+            const roomData = roomSnap.data();
+
+            const isPlayerX = roomData.playerX === currentUser.uid;
+            const playerWantsRematchField = isPlayerX ? 'playerXWantsRematch' : 'playerOWantsRematch';
+            
+            await updateDoc(roomRef, { [playerWantsRematchField]: true });
+
+            // Check if both players want a rematch
+            const updatedRoomSnap = await getDoc(roomRef);
+            const updatedRoomData = updatedRoomSnap.data();
+            if (updatedRoomData.playerXWantsRematch && updatedRoomData.playerOWantsRematch) {
+                await updateDoc(roomRef, {
+                    board: Array(9).fill(null),
+                    turn: 'X',
+                    status: 'playing',
+                    winner: null,
+                    playerXWantsRematch: false,
+                    playerOWantsRematch: false
+                });
+            }
         };
 
         function startGameListener(code) {
@@ -264,6 +324,11 @@
             const isO = data.playerO === currentUser?.uid;
             const mySym = isX ? 'X' : (isO ? 'O' : null);
             
+            document.getElementById('p1-indicator').textContent = `${data.playerXName || 'Player 1'} (X) ${isX ? '(You)' : ''}`;
+            document.getElementById('p2-indicator').textContent = `${data.playerOName || 'Player 2'} (O) ${isO ? '(You)' : ''}`;
+            document.getElementById('p1-score').textContent = data.playerXWins || 0;
+            document.getElementById('p2-score').textContent = data.playerOWins || 0;
+
             const boardEl = document.getElementById('board');
             boardEl.innerHTML = '';
             data.board.forEach((c, i) => {
@@ -276,9 +341,31 @@
             });
 
             const status = document.getElementById('game-status');
-            if (data.status === 'finished') status.textContent = data.winner==='DRAW'?"Draw!":(data.winner===mySym?"You Won!":"You Lost!");
-            else if (data.status === 'playing') status.textContent = data.turn===mySym?"Your Turn":"Opponent's Turn";
+            if (data.status === 'finished') {
+                status.textContent = data.winner==='DRAW'?"Draw!":(data.winner===mySym?"You Won!":"You Lost!");
+                document.getElementById('game-controls').classList.remove('hidden');
+            }
+            else if (data.status === 'playing') {
+                status.textContent = data.turn===mySym?"Your Turn":"Opponent's Turn";
+                document.getElementById('game-controls').classList.add('hidden');
+            }
             else status.textContent = "Waiting for opponent...";
+
+            const rematchStatus = document.getElementById('rematch-status');
+            if (data.status === 'finished') {
+                const youWantRematch = (isX && data.playerXWantsRematch) || (isO && data.playerOWantsRematch);
+                const opponentWantsRematch = (isX && data.playerOWantsRematch) || (isO && data.playerXWantsRematch);
+
+                if (youWantRematch && !opponentWantsRematch) {
+                    rematchStatus.textContent = "Waiting for opponent to accept rematch...";
+                } else if (!youWantRematch && opponentWantsRematch) {
+                    rematchStatus.textContent = "Opponent wants a rematch!";
+                } else {
+                    rematchStatus.textContent = "";
+                }
+            } else {
+                rematchStatus.textContent = "";
+            }
         }
     </script>
 </body>
