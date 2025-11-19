@@ -115,6 +115,26 @@
         .hidden { display: none; }
         .error { color: var(--secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         .code-display { font-family: monospace; font-size: 2rem; font-weight: bold; margin: 1rem 0; letter-spacing: 2px; }
+        
+        /* DEBUG LOG STYLES */
+        #debug-log {
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 400px;
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 0.8rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            word-break: break-all;
+        }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .log-error { color: #ff4444; }
+        .log-warn { color: #ffbb33; }
     </style>
 </head>
 <body>
@@ -170,6 +190,11 @@
             </div>
         </div>
 
+        <!-- VISIBLE DEBUG LOG -->
+        <div id="debug-log">
+            <div class="log-entry">System initializing...</div>
+        </div>
+
     </div>
 
     <script type="module">
@@ -177,21 +202,51 @@
         import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
+        // --- DEBUG LOGGER ---
+        function log(msg, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type === 'error' ? 'log-error' : ''}`;
+            entry.textContent = `> ${msg}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight; // Auto scroll
+            console.log(msg);
+        }
+        window.onerror = function(msg, url, line) {
+            log(`Global Error: ${msg}`, 'error');
+            return false;
+        };
+
         // --- FIREBASE CONFIGURATION ---
-        // TODO: For GitHub Pages, replace the code below with your own config from Firebase Console
+        // ⚠️ IMPORTANT: YOU MUST REPLACE THIS SECTION WITH YOUR REAL FIREBASE CONFIG
+        // 1. Go to Firebase Console > Project Settings > General > Your Apps > SDK Setup/Config
+        // 2. Copy the config object and paste it below
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "YOUR_API_KEY_HERE",
+            apiKey: "YOUR_API_KEY_HERE", 
             authDomain: "your-project.firebaseapp.com",
             projectId: "your-project-id",
             storageBucket: "your-project.appspot.com",
             messagingSenderId: "123456789",
             appId: "1:123456789:web:abc123def456"
         };
-        
+
+        // Validation check
+        if (firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
+            log("CRITICAL ERROR: Firebase Config not set! Please edit index.html and paste your Firebase Config.", 'error');
+            alert("Setup Required: You have not replaced the Firebase Config in the code yet.");
+        }
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
+        let app, db, auth;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            log("Firebase initialized.");
+        } catch (e) {
+            log(`Init Error: ${e.message}`, 'error');
+        }
 
         // --- STATE & VARIABLES ---
         let currentUser = null;
@@ -200,25 +255,31 @@
         let unsubscribeGame = null;
 
         // --- AUTHENTICATION ---
-        // Initialize auth immediately
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
-                        // Try default environment auth first
                         await signInWithCustomToken(auth, __initial_auth_token);
+                        log("Signed in with Custom Token");
                     } catch (e) {
-                        console.warn("Custom token failed (likely config mismatch), falling back to anonymous auth");
-                        // If that fails (e.g. you changed the config), fallback to anonymous
+                        log("Custom token failed, trying anonymous...", 'warn');
                         await signInAnonymously(auth);
+                        log("Signed in Anonymously (Fallback)");
                     }
                 } else {
+                    log("Attempting Anonymous Sign-in...");
                     await signInAnonymously(auth);
+                    log("Signed in Anonymously");
                 }
             } catch (error) {
-                console.error("Auth Error:", error);
-                // Only alert if BOTH methods fail
-                alert("Could not connect to game server. Please refresh.");
+                log(`AUTH ERROR: ${error.message}`, 'error');
+                
+                if (error.code === 'auth/unauthorized-domain') {
+                    log("FIX: Go to Firebase Console > Authentication > Settings > Authorized Domains and add 'www.thehexas.com'", 'error');
+                }
+                if (error.code === 'auth/api-key-not-valid') {
+                    log("FIX: Your API Key in index.html is wrong or has extra spaces.", 'error');
+                }
             }
         };
         initAuth();
@@ -226,7 +287,7 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                console.log("Logged in as:", user.uid);
+                log(`User ID: ${user.uid.slice(0,5)}...`);
             }
         });
 
@@ -259,10 +320,12 @@
         // --- CORE ACTIONS ---
 
         window.createRoom = async () => {
-            if (!currentUser) return alert("Connecting... please wait");
+            if (!currentUser) {
+                log("Cannot create room: No User", 'error');
+                return;
+            }
             
             const code = generateRoomCode();
-            // Path: /artifacts/{appId}/public/data/rooms/room_{code}
             const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`);
 
             const initialData = {
@@ -276,46 +339,49 @@
             };
 
             try {
+                log(`Creating room ${code}...`);
                 await setDoc(roomRef, initialData);
                 currentRoom = code;
                 document.getElementById('lobby-code').textContent = code;
                 switchView('lobby');
                 startGameListener(code);
+                log("Room created successfully.");
             } catch (e) {
-                console.error(e);
-                alert("Error creating room. Check permissions or connection.");
+                log(`Create Error: ${e.message}`, 'error');
+                if (e.code === 'permission-denied') {
+                    log("FIX: Go to Firebase Console > Firestore Database > Rules and set them to 'Test Mode' (allow read, write;)", 'error');
+                }
             }
         };
 
         window.joinRoom = async () => {
-            if (!currentUser) return alert("Connecting... please wait");
+            if (!currentUser) return;
             
             const codeInput = document.getElementById('join-code-input');
             const code = codeInput.value.toUpperCase().trim();
             
             if (code.length < 8) {
-                document.getElementById('join-error').textContent = "Invalid Code Format";
+                log("Invalid Code Format", 'error');
                 return;
             }
 
             const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`);
 
             try {
+                log(`Joining room ${code}...`);
                 const snapshot = await getDoc(roomRef);
                 if (!snapshot.exists()) {
-                    document.getElementById('join-error').textContent = "Room not found";
+                    log("Room not found", 'error');
                     return;
                 }
 
                 const data = snapshot.data();
                 
-                // Check if room is full or user is rejoining
                 if (data.playerX !== currentUser.uid && data.playerO && data.playerO !== currentUser.uid) {
-                    document.getElementById('join-error').textContent = "Room is full";
+                    log("Room is full", 'error');
                     return;
                 }
 
-                // Join as O if slot is empty and I'm not X
                 if (!data.playerO && data.playerX !== currentUser.uid) {
                     await updateDoc(roomRef, {
                         playerO: currentUser.uid,
@@ -326,28 +392,25 @@
                 currentRoom = code;
                 switchView('game');
                 startGameListener(code);
+                log("Joined room successfully.");
 
             } catch (e) {
-                console.error(e);
-                document.getElementById('join-error').textContent = "Connection failed";
+                log(`Join Error: ${e.message}`, 'error');
             }
         };
 
         window.makeMove = async (index) => {
             if (!gameData || !currentUser) return;
             
-            // Determine my symbol
             let mySymbol = null;
             if (gameData.playerX === currentUser.uid) mySymbol = 'X';
             else if (gameData.playerO === currentUser.uid) mySymbol = 'O';
-            else return; // Spectator
+            else return; 
 
-            // Rules
             if (gameData.status !== 'playing') return;
             if (gameData.turn !== mySymbol) return;
             if (gameData.board[index]) return;
 
-            // Apply move
             const newBoard = [...gameData.board];
             newBoard[index] = mySymbol;
             
@@ -365,7 +428,11 @@
             }
 
             const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
-            await updateDoc(roomRef, updates);
+            try {
+                await updateDoc(roomRef, updates);
+            } catch (e) {
+                log(`Move Error: ${e.message}`, 'error');
+            }
         };
 
         window.resetGame = async () => {
@@ -388,7 +455,7 @@
             
             unsubscribeGame = onSnapshot(roomRef, (docSnap) => {
                 if (!docSnap.exists()) {
-                    alert("Room deleted");
+                    log("Room deleted", 'warn');
                     location.reload();
                     return;
                 }
@@ -396,7 +463,6 @@
                 gameData = docSnap.data();
                 updateUI(gameData);
 
-                // Auto-switch lobby -> game
                 if (gameData.status === 'playing' && !document.getElementById('view-lobby').classList.contains('hidden')) {
                     switchView('game');
                 }
@@ -406,12 +472,10 @@
         function updateUI(data) {
             document.getElementById('game-room-code').textContent = currentRoom;
 
-            // Determine roles
             const isPlayerX = data.playerX === currentUser?.uid;
             const isPlayerO = data.playerO === currentUser?.uid;
             let mySymbol = isPlayerX ? 'X' : (isPlayerO ? 'O' : null);
 
-            // Update Board
             const boardEl = document.getElementById('board');
             boardEl.innerHTML = '';
             data.board.forEach((cell, idx) => {
@@ -423,7 +487,6 @@
                 boardEl.appendChild(btn);
             });
 
-            // Update Status Text
             const statusEl = document.getElementById('game-status');
             if (data.status === 'finished') {
                 statusEl.style.background = '#f1f5f9';
