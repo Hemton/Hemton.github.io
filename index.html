@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tic Tac Toe - The Hexas</title>
     <style>
         :root { --primary: #4f46e5; --secondary: #e11d48; --bg: #f8fafc; --surface: #ffffff; --text: #1e293b; --border: #e2e8f0; }
@@ -28,7 +28,7 @@
         .hidden { display: none; }
         .error { color: var(--secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         .code-display { font-family: monospace; font-size: 2rem; font-weight: bold; margin: 1rem 0; letter-spacing: 2px; }
-        #debug-log { margin-top: 2rem; width: 100%; max-width: 400px; background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 0.8rem; padding: 1rem; border-radius: 0.5rem; text-align: left; max-height: 200px; overflow-y: auto; word-break: break-all; }
+        #debug-log { display: none; }
         .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
         .log-error { color: #ff4444; } .log-warn { color: #ffbb33; }
         
@@ -43,6 +43,32 @@
         .room-item:hover { background-color: var(--bg); }
         .room-item-name { font-weight: 600; }
         .room-item-players { font-size: 0.9rem; color: #64748b; }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            .card {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .cell {
+                font-size: 2.5rem;
+            }
+            .code-display {
+                font-size: 1.5rem;
+            }
+            button {
+                padding: 0.9rem;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body>
