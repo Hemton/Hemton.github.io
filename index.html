@@ -221,14 +221,26 @@
         // ⚠️ IMPORTANT: YOU MUST REPLACE THIS SECTION WITH YOUR REAL FIREBASE CONFIG
         // 1. Go to Firebase Console > Project Settings > General > Your Apps > SDK Setup/Config
         // 2. Copy the config object and paste it below
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "YOUR_API_KEY_HERE", 
-            authDomain: "your-project.firebaseapp.com",
-            projectId: "your-project-id",
-            storageBucket: "your-project.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abc123def456"
+        // const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        //     apiKey: "YOUR_API_KEY_HERE", 
+        //     authDomain: "your-project.firebaseapp.com",
+        //     projectId: "your-project-id",
+        //     storageBucket: "your-project.appspot.com",
+        //     messagingSenderId: "123456789",
+        //     appId: "1:123456789:web:abc123def456"
+        // };
+
+        // PASTE YOUR REAL CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-example-key-12345",
+            authDomain: "tic-tac-toe-game.firebaseapp.com",
+            projectId: "tic-tac-toe-game",
+            storageBucket: "tic-tac-toe-game.appspot.com",
+            messagingSenderId: "8492018402",
+            appId: "1:8492018402:web:7321638"
         };
+
+        
 
         // Validation check
         if (firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
