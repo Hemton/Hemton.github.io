@@ -5,24 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic Tac Toe - The Hexas</title>
     <style>
-        :root { --primary: #4f46e5; --secondary: #e11d48; --bg: #f8fafc; --surface: #ffffff; --text: #1e293b; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        :root { --primary: #4f46e5; --secondary: #e11d48; --bg: #f8fafc; --surface: #ffffff; --text: #1e293b; --border: #e2e8f0; }
+        body.dark-mode { --primary: #6366f1; --secondary: #f43f5e; --bg: #1e293b; --surface: #334155; --text: #f1f5f9; --border: #475569; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.3s, color 0.3s; }
         .container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
-        .card { background: var(--surface); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .card { background: var(--surface); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: background-color 0.3s; }
         h1 { margin-bottom: 0.5rem; }
         .subtitle { color: #64748b; margin-bottom: 2rem; }
-        button { width: 100%; padding: 1rem; margin-bottom: 1rem; border: none; border-radius: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.1s; }
+        button { width: 100%; padding: 1rem; margin-bottom: 1rem; border: none; border-radius: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.1s, background-color 0.3s, color 0.3s; }
         button:active { transform: scale(0.98); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: transparent; border: 2px solid #e2e8f0; color: var(--text); }
+        .btn-secondary { background: transparent; border: 2px solid var(--border); color: var(--text); }
         .btn-danger { background: #334155; color: white; width: auto; padding: 0.75rem 1.5rem; margin-top: 1rem; }
-        input { width: 100%; padding: 1rem; font-size: 1.5rem; text-align: center; border: 2px solid #e2e8f0; border-radius: 0.75rem; margin-bottom: 1rem; text-transform: uppercase; font-family: monospace; box-sizing: border-box; }
-        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; background: #e2e8f0; padding: 0.75rem; border-radius: 1rem; margin: 1.5rem 0; }
-        .cell { background: white; aspect-ratio: 1; border: none; border-radius: 0.5rem; font-size: 3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        input { width: 100%; padding: 1rem; font-size: 1.5rem; text-align: center; border: 2px solid var(--border); border-radius: 0.75rem; margin-bottom: 1rem; text-transform: uppercase; font-family: monospace; box-sizing: border-box; background-color: var(--surface); color: var(--text); transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; background: var(--border); padding: 0.75rem; border-radius: 1rem; margin: 1.5rem 0; }
+        .cell { background: var(--surface); aspect-ratio: 1; border: none; border-radius: 0.5rem; font-size: 3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.3s; }
         .cell.X { color: var(--primary); }
         .cell.O { color: var(--secondary); }
         .status-badge { display: inline-block; padding: 0.5rem 1.5rem; background: #e0e7ff; color: var(--primary); border-radius: 999px; font-weight: 600; margin-bottom: 1rem; }
+        body.dark-mode .status-badge { background: #4338ca; color: #e0e7ff; }
         .hidden { display: none; }
         .error { color: var(--secondary); margin-bottom: 1rem; font-size: 0.9rem; }
         .code-display { font-family: monospace; font-size: 2rem; font-weight: bold; margin: 1rem 0; letter-spacing: 2px; }
@@ -35,6 +37,12 @@
         #config-modal h2 { color: #ff4444; }
         #config-modal p { max-width: 500px; line-height: 1.5; margin-bottom: 20px; }
         .code-block { background: #333; padding: 10px; border-radius: 5px; font-family: monospace; text-align: left; width: 100%; max-width: 500px; overflow-x: auto; }
+
+        /* Room List Item */
+        .room-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .room-item:hover { background-color: var(--bg); }
+        .room-item-name { font-weight: 600; }
+        .room-item-players { font-size: 0.9rem; color: #64748b; }
     </style>
 </head>
 <body>
@@ -49,6 +57,10 @@
         <p>The game will not run without this API Key.</p>
     </div>
 
+    <div style="position: fixed; top: 1rem; right: 1rem; z-index: 1001;">
+        <button id="theme-toggle" style="width: auto; padding: 0.5rem; border: none; background: none; cursor: pointer; font-size: 1.5rem;">🌙</button>
+    </div>
+
     <div class="container">
         <div id="view-name" class="card">
             <h2>Enter Your Name</h2>
@@ -60,6 +72,12 @@
             <p class="subtitle">www.thehexas.com</p>
             <button class="btn-primary" onclick="createRoom()">Create Room</button>
             <button class="btn-secondary" onclick="switchView('join')">Join Room</button>
+            <div id="room-list-container" style="margin-top: 2rem;">
+                <h2>Available Rooms</h2>
+                <div id="room-list" style="max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem;">
+                    <!-- Room list will be populated here -->
+                </div>
+            </div>
         </div>
         <div id="view-join" class="card hidden">
             <h2>Join Game</h2>
@@ -98,7 +116,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
         function log(msg, type = 'info') {
@@ -160,6 +178,41 @@
         let gameData = null;
         let unsubscribeGame = null;
         let currentPlayerName = null;
+        let unsubscribeRooms = null;
+
+        // Theme management
+        const themeToggle = document.getElementById('theme-toggle');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggle.textContent = '☀️';
+            } else {
+                document.body.classList.remove('dark-mode');
+                themeToggle.textContent = '🌙';
+            }
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+
+        // Load saved theme or use system preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else {
+            applyTheme(prefersDark.matches ? 'dark' : 'light');
+        }
+        prefersDark.addEventListener('change', (e) => {
+            if (!localStorage.getItem('theme')) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+
 
         const initAuth = async () => {
             try {
@@ -199,13 +252,21 @@
         function switchView(v) {
             ['name', 'menu', 'join', 'lobby', 'game'].forEach(id => document.getElementById(`view-${id}`).classList.add('hidden'));
             document.getElementById(`view-${v}`).classList.remove('hidden');
+
+            if (v === 'menu') {
+                listenForRooms();
+            } else {
+                if (unsubscribeRooms) {
+                    unsubscribeRooms();
+                    unsubscribeRooms = null;
+                }
+            }
         }
 
         async function createRoom() {
             if (!currentUser) { log("Wait for login...", 'error'); return; }
             const code = Math.floor(10000000 + Math.random() * 90000000).toString();
-            const formattedCode = `${code.slice(0,3)}-${code.slice(3,5)}-${code.slice(5,8)}`;
-            
+            const formattedCode = `${code.slice(0,3)}-${code.slice(3,5)}-${code.slice(5,8)}`;            
             try {
                 log(`Creating ${formattedCode}...`);
                 // Path: artifacts/{appId}/public/data/rooms/room_{code}
@@ -214,7 +275,8 @@
                     playerX: currentUser.uid, playerO: null, createdAt: Date.now(),
                     playerXWantsRematch: false, playerOWantsRematch: false,
                     playerXName: currentPlayerName, playerOName: null,
-                    playerXWins: 0, playerOWins: 0
+                    playerXWins: 0, playerOWins: 0,
+                    lastStarter: 'O' // 'O' starts first, so next is 'X'
                 });
                 currentRoom = formattedCode;
                 document.getElementById('lobby-code').textContent = formattedCode;
@@ -297,13 +359,15 @@
             const updatedRoomSnap = await getDoc(roomRef);
             const updatedRoomData = updatedRoomSnap.data();
             if (updatedRoomData.playerXWantsRematch && updatedRoomData.playerOWantsRematch) {
+                const newStarter = updatedRoomData.lastStarter === 'X' ? 'O' : 'X';
                 await updateDoc(roomRef, {
                     board: Array(9).fill(null),
-                    turn: 'X',
+                    turn: newStarter,
                     status: 'playing',
                     winner: null,
                     playerXWantsRematch: false,
-                    playerOWantsRematch: false
+                    playerOWantsRematch: false,
+                    lastStarter: newStarter
                 });
             }
         };
@@ -311,14 +375,70 @@
         function startGameListener(code) {
             if (unsubscribeGame) unsubscribeGame();
             unsubscribeGame = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`), (snap) => {
-                if (!snap.exists()) { location.reload(); return; }
-                gameData = snap.data();
-                updateUI(gameData);
-                if (gameData.status === 'playing' && !document.getElementById('view-lobby').classList.contains('hidden')) switchView('game');
+            if (!snap.exists()) { 
+                log("Room deleted or does not exist.");
+                switchView('menu');
+                location.reload(); 
+                return; 
+            }
+            gameData = snap.data();
+
+            // Handle player leaving
+            window.addEventListener('beforeunload', () => {
+                if (currentRoom && currentUser && gameData) {
+                    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
+                    const isPlayerX = gameData.playerX === currentUser.uid;
+                    
+                    if (isPlayerX && !gameData.playerO) {
+                        // If only player X is in the room, delete it on leaving
+                        deleteDoc(roomRef);
+                    }
+                }
+            });
+
+            updateUI(gameData);
+            if (gameData.status === 'playing' && document.getElementById('view-lobby').classList.contains('hidden') === false) {
+                switchView('game');
+            }
+        });
+    }        function listenForRooms() {
+            if (unsubscribeRooms) unsubscribeRooms();
+            const roomsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
+            unsubscribeRooms = onSnapshot(roomsCollection, (snapshot) => {
+                const roomList = document.getElementById('room-list');
+                roomList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const room = doc.data();
+                    const roomCode = doc.id.replace('room_', '');
+                    if (room.status === 'waiting' && !room.playerO) {
+                        const roomItem = document.createElement('div');
+                        roomItem.className = 'room-item';
+                        roomItem.onclick = () => {
+                            document.getElementById('join-code-input').value = roomCode;
+                            joinRoom();
+                        };
+
+                        const nameEl = document.createElement('span');
+                        nameEl.className = 'room-item-name';
+                        nameEl.textContent = `${room.playerXName || 'Anonymous'}'s Room`;
+                        
+                        const playersEl = document.createElement('span');
+                        playersEl.className = 'room-item-players';
+                        playersEl.textContent = '1/2 Players';
+
+                        roomItem.appendChild(nameEl);
+                        roomItem.appendChild(playersEl);
+                        roomList.appendChild(roomItem);
+                    }
+                });
+                if (roomList.innerHTML === '') {
+                    roomList.innerHTML = '<p style="padding: 1rem; text-align: center; color: #64748b;">No available rooms.</p>';
+                }
             });
         }
 
         function updateUI(data) {
+            if (!currentUser) return;
             document.getElementById('game-room-code').textContent = currentRoom;
             const isX = data.playerX === currentUser?.uid;
             const isO = data.playerO === currentUser?.uid;
