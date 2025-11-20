@@ -4,307 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tic Tac Toe - The Hexas</title>
-    <style>
-        :root { --primary: #4f46e5; --secondary: #e11d48; --bg: #f8fafc; --surface: #ffffff; --text: #1e293b; --border: #e2e8f0; }
-        body.dark-mode { --primary: #818cf8; --secondary: #fb7185; --bg: #1e293b; --surface: #334155; --text: #f1f5f9; --border: #475569; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.3s, color 0.3s; }
-        .container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
-        .card { background: var(--surface); padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: background-color 0.3s; }
-        h1 { margin-bottom: 0.5rem; }
-        .subtitle { color: #64748b; margin-bottom: 2rem; }
-        button { width: 100%; padding: 1rem; margin-bottom: 1rem; border: none; border-radius: 0.75rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.1s, background-color 0.3s, color 0.3s; }
-        button:active { transform: scale(0.98); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: transparent; border: 2px solid var(--border); color: var(--text); }
-        .btn-danger { background: #334155; color: white; width: auto; padding: 0.75rem 1.5rem; margin-top: 1rem; }
-        input { width: 100%; padding: 1rem; font-size: 1.5rem; text-align: center; border: 2px solid var(--border); border-radius: 0.75rem; margin-bottom: 1rem; font-family: monospace; box-sizing: border-box; background-color: var(--surface); color: var(--text); transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
-        .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; background: var(--border); padding: 0.75rem; border-radius: 1rem; margin: 1.5rem 0; }
-        .cell { background: var(--surface); aspect-ratio: 1; border: none; border-radius: 0.5rem; font-size: 3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.3s; }
-        .cell.X { color: var(--primary); }
-        .cell.O { color: var(--secondary); }
-        .status-badge { display: inline-block; padding: 0.5rem 1.5rem; background: #e0e7ff; color: var(--primary); border-radius: 999px; font-weight: 600; margin-bottom: 1rem; }
-        body.dark-mode .status-badge { background: #4338ca; color: #e0e7ff; }
-        .hidden { display: none; }
-        .error { color: var(--secondary); margin-bottom: 1rem; font-size: 0.9rem; }
-        .code-display { font-family: monospace; font-size: 2rem; font-weight: bold; margin: 1rem 0; letter-spacing: 2px; }
-        #debug-log { display: none; }
-        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #333; padding-bottom: 2px; }
-        .log-error { color: #ff4444; } .log-warn { color: #ffbb33; }
-        
-        /* Config Modal */
-        #config-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; color: white; text-align: center; padding: 20px; }
-        #config-modal h2 { color: #ff4444; }
-        #config-modal p { max-width: 500px; line-height: 1.5; margin-bottom: 20px; }
-        .code-block { background: #333; padding: 10px; border-radius: 5px; font-family: monospace; text-align: left; width: 100%; max-width: 500px; overflow-x: auto; }
-
-        /* Room List Item */
-        .room-item { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; border-bottom: 1px solid var(--border); cursor: pointer; }
-        .room-item:hover { background-color: var(--bg); }
-        .room-item-name { font-weight: 600; }
-        .room-item-players { font-size: 0.9rem; color: #64748b; }
-        /* Make cards use full available width and include box-sizing for predictable layouts */
-        .card { box-sizing: border-box; width: 100%; }
-
-        /* Board defaults: allow cells to remain square and grow/shrink with container */
-        .board { width: 100%; grid-auto-rows: 1fr; }
-        .board .cell { width: 100%; height: auto; aspect-ratio: 1 / 1; }
-
-        /* Base responsive typography */
-        h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); }
-        h2 { font-size: clamp(1.4rem, 3.5vw, 2rem); }
-        .subtitle { font-size: clamp(0.9rem, 2.5vw, 1rem); }
-        
-        /* Theme toggle responsive positioning */
-        .theme-toggle-container {
-            position: fixed;
-            top: clamp(0.5rem, 2vw, 1rem);
-            right: clamp(0.5rem, 2vw, 1rem);
-            z-index: 1001;
-        }
-        
-        #theme-toggle {
-            width: auto;
-            padding: clamp(0.4rem, 1vw, 0.6rem);
-            border: none;
-            background: var(--surface);
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            cursor: pointer;
-            font-size: clamp(1.2rem, 3vw, 1.6rem);
-            transition: all 0.3s ease;
-        }
-        
-        #theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        /* Responsive Design: Large screens and desktops (1200px+) */
-        @media (min-width: 1200px) {
-            .container { max-width: 480px; padding: 24px; }
-            .card { padding: 2.5rem; }
-            .board { gap: 1rem; padding: 1rem; max-width: 360px; margin: 2rem auto; }
-            .cell { font-size: 3.5rem; }
-            button { padding: 1.2rem; font-size: 1.1rem; }
-            .code-display { font-size: 2.5rem; }
-            #room-list { max-height: 200px; }
-        }
-
-        /* Responsive Design: Laptops and medium screens (992px - 1199px) */
-        @media (max-width: 1199px) and (min-width: 992px) {
-            .container { max-width: 450px; padding: 22px; }
-            .card { padding: 2.2rem; }
-            .board { gap: 0.9rem; padding: 0.9rem; }
-            .cell { font-size: 3.2rem; }
-            button { padding: 1.1rem; font-size: 1.05rem; }
-        }
-
-        /* Responsive Design: tablets and small laptops (769px - 991px) */
-        @media (max-width: 991px) and (min-width: 769px) {
-            .container { max-width: 420px; padding: 18px; }
-            .card { padding: 1.8rem; border-radius: 1rem; }
-            .board { gap: 0.8rem; padding: 0.8rem; }
-            .cell { font-size: clamp(2.5rem, 5vw, 3rem); }
-            button { padding: 1rem; font-size: 1rem; }
-            .code-display { font-size: 2.2rem; }
-            #room-list { max-height: 180px; }
-        }
-
-        /* Responsive Design: tablets portrait and small screens (577px - 768px) */
-        @media (max-width: 768px) and (min-width: 577px) {
-            .container { max-width: 400px; padding: 16px; }
-            .card { padding: 1.5rem; border-radius: 0.9rem; }
-            .board { gap: 0.7rem; padding: 0.7rem; }
-            .cell { font-size: clamp(2.2rem, 6vw, 2.8rem); border-radius: 0.6rem; }
-            button { padding: 0.9rem; font-size: 0.95rem; }
-            .code-display { font-size: 1.8rem; }
-            #room-list { max-height: 160px; }
-            .room-item { padding: 0.6rem; }
-            .room-item-name { font-size: 0.95rem; }
-            .room-item-players { font-size: 0.85rem; }
-        }
-
-        /* Responsive Design: large phones landscape and small tablets (481px - 576px) */
-        @media (max-width: 576px) and (min-width: 481px) {
-            .container { padding: 14px; max-width: 95%; }
-            .card { padding: 1.3rem; border-radius: 0.8rem; }
-            .board { gap: 0.6rem; padding: 0.6rem; }
-            .cell { font-size: clamp(1.8rem, 7vw, 2.4rem); border-radius: 0.5rem; }
-            button { padding: 0.8rem; font-size: 0.9rem; }
-            .code-display { font-size: 1.6rem; letter-spacing: 1px; }
-            .status-badge { padding: 0.4rem 1.2rem; font-size: 0.9rem; }
-            #room-list { max-height: 140px; }
-            .room-item { padding: 0.55rem; }
-            input { padding: 0.9rem; font-size: 1.3rem; }
-        }
-
-        /* Responsive Design: phones portrait (320px - 480px) */
-        @media (max-width: 480px) {
-            body { padding: 0; }
-            .container { 
-                padding: clamp(8px, 3vw, 12px); 
-                max-width: 100%; 
-                margin: 0;
-                min-height: 100vh;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
-            .card { 
-                padding: clamp(0.8rem, 4vw, 1.2rem); 
-                border-radius: 0.7rem;
-                margin-bottom: 1rem;
-            }
-            .board { 
-                gap: clamp(0.3rem, 2vw, 0.5rem); 
-                padding: clamp(0.3rem, 2vw, 0.5rem);
-                margin: 1rem 0;
-            }
-            .cell { 
-                font-size: clamp(1.5rem, 8vw, 2.2rem); 
-                border-radius: 0.4rem;
-                min-height: clamp(60px, 15vw, 80px);
-            }
-            button { 
-                padding: clamp(0.7rem, 3vw, 0.9rem); 
-                font-size: clamp(0.85rem, 3.5vw, 0.95rem);
-                margin-bottom: 0.8rem;
-                min-height: 44px; /* Accessibility: minimum touch target */
-            }
-            .code-display { 
-                font-size: clamp(1rem, 5vw, 1.4rem); 
-                letter-spacing: 0.5px;
-                word-break: break-all;
-            }
-            .status-badge { 
-                padding: clamp(0.3rem, 2vw, 0.4rem) clamp(0.8rem, 4vw, 1rem); 
-                font-size: clamp(0.8rem, 3vw, 0.9rem);
-            }
-            #room-list { 
-                max-height: 120px; 
-                font-size: 0.9rem;
-            }
-            .room-item { 
-                padding: clamp(0.4rem, 2vw, 0.6rem);
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.2rem;
-            }
-            .room-item-name { font-size: clamp(0.85rem, 3vw, 0.9rem); }
-            .room-item-players { font-size: clamp(0.75rem, 2.5vw, 0.8rem); }
-            input { 
-                padding: clamp(0.8rem, 3vw, 1rem); 
-                font-size: clamp(1.1rem, 4vw, 1.4rem);
-            }
-            
-            /* Game-specific responsive elements */
-            .player-indicators {
-                display: flex;
-                justify-content: space-between;
-                font-size: clamp(0.75rem, 3vw, 0.9rem);
-                margin-top: 0.8rem;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-            
-            .player-scores {
-                display: flex;
-                justify-content: space-between;
-                font-size: clamp(1rem, 4vw, 1.2rem);
-                font-weight: bold;
-                margin-top: 0.5rem;
-            }
-            
-            .game-controls {
-                flex-direction: column;
-                gap: 0.8rem;
-            }
-            
-            .game-controls button {
-                width: 100%;
-            }
-            
-            #rematch-status {
-                margin-top: 0.5rem !important;
-                font-size: clamp(0.8rem, 3vw, 0.9rem);
-                text-align: center;
-            }
-            
-            /* Config modal responsive */
-            #config-modal {
-                padding: clamp(12px, 4vw, 20px);
-            }
-            
-            #config-modal p {
-                max-width: 100%;
-                font-size: clamp(0.85rem, 3.5vw, 1rem);
-                line-height: 1.4;
-            }
-            
-            #config-modal h2 {
-                font-size: clamp(1.2rem, 5vw, 1.8rem);
-            }
-        }
-
-        /* Ultra-small screens (below 320px) */
-        @media (max-width: 319px) {
-            .container { padding: 6px; }
-            .card { padding: 0.7rem; }
-            .board { gap: 0.25rem; padding: 0.25rem; }
-            .cell { font-size: 1.2rem; min-height: 50px; }
-            button { padding: 0.6rem; font-size: 0.8rem; }
-            .code-display { font-size: 0.9rem; }
-            h1 { font-size: 1.4rem; }
-            h2 { font-size: 1.1rem; }
-        }
-
-        /* Landscape orientation optimizations */
-        @media (max-height: 500px) and (orientation: landscape) {
-            body { padding: 0; }
-            .container {
-                padding: 8px;
-                justify-content: flex-start;
-                padding-top: 2rem;
-            }
-            .card { padding: 1rem; margin-bottom: 0.5rem; }
-            .board { margin: 0.8rem 0; }
-            h1, h2 { margin-bottom: 0.3rem; }
-            .status-badge { margin-bottom: 0.5rem; }
-            .theme-toggle-container {
-                top: 0.5rem;
-                right: 0.5rem;
-            }
-        }
-
-        /* High DPI / Retina display optimizations */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .cell {
-                border: 0.5px solid var(--border);
-            }
-            
-            button {
-                border: 0.5px solid transparent;
-            }
-        }
-
-        /* Reduce motion for users who prefer it */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-            
-            #theme-toggle:hover {
-                transform: none;
-            }
-            
-            button:active {
-                transform: none;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <!-- Setup Required Modal -->
@@ -312,487 +12,86 @@
         <h2>⚠️ SETUP REQUIRED ⚠️</h2>
         <p>You have not configured the game yet.</p>
         <p>1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color:#4f46e5;">Firebase Console</a><br>
-        2. Project Settings -> General -> Your Apps -> SDK Setup<br>
+        2. Project Settings → General → Your Apps → SDK Setup<br>
         3. Copy the "const firebaseConfig = {...}" block.<br>
-        4. Edit <b>index.html</b> and paste it at line 112.</p>
+        4. Edit <b>config/firebase.js</b> and update the configuration.</p>
         <p>The game will not run without this API Key.</p>
     </div>
 
+    <!-- Theme Toggle -->
     <div class="theme-toggle-container">
         <button id="theme-toggle">🌙</button>
     </div>
 
+    <!-- Main Container -->
     <div class="container">
+        <!-- Name Entry View -->
         <div id="view-name" class="card">
             <h2>Enter Your Name</h2>
-            <input type="text" id="name-input" placeholder="Your Name">
+            <input type="text" id="name-input" placeholder="Your Name" maxlength="20">
             <button class="btn-primary" onclick="setPlayerName()">Continue</button>
         </div>
+
+        <!-- Main Menu View -->
         <div id="view-menu" class="card hidden">
             <h1>Tic Tac Toe</h1>
             <p class="subtitle">www.thehexas.com</p>
             <button class="btn-primary" onclick="createRoom()">Create Room</button>
             <button class="btn-secondary" onclick="switchView('join')">Join Room</button>
-            <div id="room-list-container" style="margin-top: 2rem;">
+            <div id="room-list-container">
                 <h2>Available Rooms</h2>
-                <div id="room-list" style="max-height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.5rem;">
+                <div id="room-list">
                     <!-- Room list will be populated here -->
                 </div>
             </div>
         </div>
+
+        <!-- Join Room View -->
         <div id="view-join" class="card hidden">
             <h2>Join Game</h2>
-            <p class="subtitle">Enter the code</p>
-            <input type="text" id="join-code-input" placeholder="XXX-XX-XXX">
+            <p class="subtitle">Enter the room code</p>
+            <input type="text" id="join-code-input" placeholder="XXX-XX-XXX" maxlength="11">
             <div id="join-error" class="error"></div>
             <button class="btn-primary" onclick="joinRoom()">Join</button>
             <button class="btn-secondary" onclick="switchView('menu')">Back</button>
         </div>
+
+        <!-- Lobby View -->
         <div id="view-lobby" class="card hidden">
             <h2>Room Created</h2>
             <div class="code-display" id="lobby-code">...</div>
-            <p class="subtitle">Share this code with your friend.</p>
+            <p class="subtitle">Share this code with your friend</p>
             <div class="status-badge">Waiting for opponent...</div>
             <button class="btn-secondary" onclick="location.reload()">Cancel</button>
         </div>
+
+        <!-- Game View -->
         <div id="view-game" class="card hidden">
             <div id="game-status" class="status-badge">Connecting...</div>
             <div class="board" id="board"></div>
-            <div class="player-indicators" style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #64748b; margin-top: 1rem;">
+            <div class="player-indicators">
                 <span id="p1-indicator">Player 1 (X)</span>
                 <span id="p2-indicator">Player 2 (O)</span>
             </div>
-            <div class="player-scores" style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold;">
+            <div class="player-scores">
                 <span id="p1-score">0</span>
                 <span id="p2-score">0</span>
             </div>
-            <div id="game-controls" class="game-controls hidden" style="display: flex; justify-content: center; gap: 1rem; align-items: center;">
+            <div id="game-controls" class="game-controls hidden">
                 <button class="btn-danger" onclick="resetGame()">Play Again</button>
                 <button class="btn-secondary" onclick="leaveGame()">Leave Game</button>
-                <p id="rematch-status" style="margin-top: 1rem; color: #64748b;"></p>
+                <p id="rematch-status"></p>
             </div>
-            <div class="mt-4 text-xs text-gray-400">Room: <span id="game-room-code"></span></div>
+            <div class="room-info">Room: <span id="game-room-code"></span></div>
         </div>
-        <div id="debug-log"><div class="log-entry">System initializing...</div></div>
+
+        <!-- Debug Log (hidden by default) -->
+        <div id="debug-log">
+            <div class="log-entry">System initializing...</div>
+        </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-
-        function log(msg, type = 'info') {
-            const logDiv = document.getElementById('debug-log');
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type === 'error' ? 'log-error' : ''}`;
-            entry.textContent = `> ${msg}`;
-            logDiv.appendChild(entry);
-            logDiv.scrollTop = logDiv.scrollHeight;
-            console.log(msg);
-        }
-        window.onerror = function(msg) { log(`Global Error: ${msg}`, 'error'); return false; };
-
-        // =================================================================================
-        //  👇👇👇 PASTE YOUR FIREBASE CONFIG HERE 👇👇👇
-        //  Go to Firebase Console -> Project Settings -> General -> Your Apps -> SDK Setup
-        //  Copy the whole "const firebaseConfig = { ... };" block and paste it over the section below.
-        // =================================================================================
-
-        let firebaseConfig;
-        // Priority: 1. Environment Config (Preview), 2. Manual Config (Deploy)
-        if (typeof __firebase_config !== 'undefined') {
-            firebaseConfig = JSON.parse(__firebase_config);
-        } else {
-            firebaseConfig = {
-                apiKey: "AIzaSyDk8eVrKZSXbCDE1QdmpMZ6y9PgBtYlK4I",
-                authDomain: "tic-tac-toe-41a5c.firebaseapp.com",
-                projectId: "tic-tac-toe-41a5c",
-                storageBucket: "tic-tac-toe-41a5c.firebasestorage.app",
-                messagingSenderId: "17510786092",
-                appId: "1:17510786092:web:5734cd305289b0b3d99d89",
-                measurementId: "G-8GTZKD290J"
-            };
-        }
-
-        // =================================================================================
-        //  👆👆👆 END OF CONFIG SECTION 👆👆👆
-        // =================================================================================
-
-        // Check if user has pasted config (Only checks if we are falling back to the manual object)
-        if (typeof __firebase_config === 'undefined' && (firebaseConfig.apiKey.includes("REPLACE_THIS"))) {
-            document.getElementById('config-modal').style.display = 'flex';
-            log("CRITICAL: Config Missing. Blocking App.", 'error');
-            throw new Error("App Config Missing: Edit index.html line 112");
-        }
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        let app, db, auth;
-
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            log("Firebase initialized.");
-        } catch (e) { log(`Init Error: ${e.message}`, 'error'); }
-
-        let currentUser = null;
-        let currentRoom = null;
-        let gameData = null;
-        let unsubscribeGame = null;
-        let currentPlayerName = null;
-        let unsubscribeRooms = null;
-
-        // Theme management
-        const themeToggle = document.getElementById('theme-toggle');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-
-        function applyTheme(theme) {
-            if (theme === 'dark') {
-                document.body.classList.add('dark-mode');
-                themeToggle.textContent = '☀️';
-            } else {
-                document.body.classList.remove('dark-mode');
-                themeToggle.textContent = '🌙';
-            }
-        }
-
-        themeToggle.addEventListener('click', () => {
-            const newTheme = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
-            localStorage.setItem('theme', newTheme);
-            applyTheme(newTheme);
-        });
-
-        // Load saved theme or use system preference
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            applyTheme(savedTheme);
-        } else {
-            applyTheme(prefersDark.matches ? 'dark' : 'light');
-        }
-        prefersDark.addEventListener('change', (e) => {
-            if (!localStorage.getItem('theme')) {
-                applyTheme(e.matches ? 'dark' : 'light');
-            }
-        });
-
-
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try { await signInWithCustomToken(auth, __initial_auth_token); log("Signed in (Custom Token)"); }
-                    catch (e) { await signInAnonymously(auth); log("Signed in (Anonymous Fallback)"); }
-                } else {
-                    await signInAnonymously(auth);
-                    log("Signed in Anonymously");
-                }
-            } catch (error) {
-                log(`AUTH ERROR: ${error.message}`, 'error');
-                if (error.code === 'auth/api-key-not-valid') {
-                    log("EXPLANATION: You are trying to connect to Google Firebase, but your 'apiKey' in index.html is wrong.", 'error');
-                }
-            }
-        };
-        initAuth();
-
-        onAuthStateChanged(auth, (user) => { if (user) { currentUser = user; log(`User: ${user.uid.slice(0,5)}...`); } });
-
-        window.createRoom = createRoom;
-        window.joinRoom = joinRoom;
-        window.switchView = switchView;
-        window.makeMove = makeMove;
-        window.resetGame = resetGame;
-        window.setPlayerName = setPlayerName;
-        window.leaveGame = leaveGame;
-
-        function setPlayerName() {
-            const name = document.getElementById('name-input').value.trim();
-            if (name) {
-                currentPlayerName = name;
-                switchView('menu');
-            }
-        }
-
-        function switchView(v) {
-            ['name', 'menu', 'join', 'lobby', 'game'].forEach(id => document.getElementById(`view-${id}`).classList.add('hidden'));
-            document.getElementById(`view-${v}`).classList.remove('hidden');
-
-            if (v === 'menu') {
-                listenForRooms();
-            } else {
-                if (unsubscribeRooms) {
-                    unsubscribeRooms();
-                    unsubscribeRooms = null;
-                }
-            }
-        }
-
-        async function createRoom() {
-            if (!currentUser) { log("Wait for login...", 'error'); return; }
-            const code = Math.floor(10000000 + Math.random() * 90000000).toString();
-            const formattedCode = `${code.slice(0,3)}-${code.slice(3,5)}-${code.slice(5,8)}`;            
-            try {
-                log(`Creating ${formattedCode}...`);
-                // Path: artifacts/{appId}/public/data/rooms/room_{code}
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${formattedCode}`), {
-                    board: Array(9).fill(null), turn: 'X', status: 'waiting', winner: null,
-                    playerX: currentUser.uid, playerO: null, createdAt: Date.now(),
-                    playerXWantsRematch: false, playerOWantsRematch: false,
-                    playerXName: currentPlayerName, playerOName: null,
-                    playerXWins: 0, playerOWins: 0,
-                    lastStarter: 'O' // 'O' starts first, so next is 'X'
-                });
-                currentRoom = formattedCode;
-                document.getElementById('lobby-code').textContent = formattedCode;
-                switchView('lobby');
-                startGameListener(formattedCode);
-            } catch (e) { 
-                log(`Create Failed: ${e.message}`, 'error');
-                if (e.code === 'permission-denied') {
-                    log("FIX: Go to Firebase Console > Firestore > Rules. Change 'allow read, write: if false;' to 'if true;'", 'error');
-                }
-            }
-        };
-
-        async function joinRoom() {
-            if (!currentUser) return;
-            const code = document.getElementById('join-code-input').value.toUpperCase().trim();
-            if (code.length < 8) { log("Invalid Code", 'error'); return; }
-
-            try {
-                log(`Joining ${code}...`);
-                const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`);
-                const snap = await getDoc(roomRef);
-                
-                if (!snap.exists()) { log("Room not found", 'error'); return; }
-                const data = snap.data();
-
-                if (data.playerX !== currentUser.uid && data.playerO && data.playerO !== currentUser.uid) { log("Room Full", 'error'); return; }
-                
-                if (!data.playerO && data.playerX !== currentUser.uid) {
-                    await updateDoc(roomRef, { playerO: currentUser.uid, status: 'playing', playerOName: currentPlayerName });
-                } else if (data.playerX === currentUser.uid && !data.playerXName) {
-                    await updateDoc(roomRef, { playerXName: currentPlayerName });
-                }
-                currentRoom = code;
-                switchView('game');
-                startGameListener(code);
-            } catch (e) { log(`Join Failed: ${e.message}`, 'error'); }
-        };
-
-        async function makeMove(idx) {
-            if (!gameData || !currentUser || gameData.status !== 'playing') return;
-            const isX = gameData.playerX === currentUser.uid;
-            const isO = gameData.playerO === currentUser.uid;
-            const mySym = isX ? 'X' : (isO ? 'O' : null);
-            
-            if (gameData.turn !== mySym || gameData.board[idx]) return;
-
-            const newBoard = [...gameData.board];
-            newBoard[idx] = mySym;
-            const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-            let winner = null;
-            for(let w of wins) if(newBoard[w[0]] && newBoard[w[0]]===newBoard[w[1]] && newBoard[w[0]]===newBoard[w[2]]) winner = newBoard[w[0]];
-            if(!winner && !newBoard.includes(null)) winner = 'DRAW';
-
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
-            const updates = { board: newBoard, turn: mySym==='X'?'O':'X', status: winner?'finished':'playing', winner: winner || null, playerXWantsRematch: false, playerOWantsRematch: false };
-
-            if (winner) {
-                updates.lastStarter = gameData.turn;
-            }
-
-            if (winner === 'X') {
-                updates.playerXWins = (gameData.playerXWins || 0) + 1;
-            } else if (winner === 'O') {
-                updates.playerOWins = (gameData.playerOWins || 0) + 1;
-            }
-
-            await updateDoc(roomRef, updates);
-        };
-
-        async function resetGame() {
-            if (!currentRoom || !currentUser) return;
-
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
-            const roomSnap = await getDoc(roomRef);
-            const roomData = roomSnap.data();
-
-            const isPlayerX = roomData.playerX === currentUser.uid;
-            const playerWantsRematchField = isPlayerX ? 'playerXWantsRematch' : 'playerOWantsRematch';
-            
-            await updateDoc(roomRef, { [playerWantsRematchField]: true });
-
-            // Check if both players want a rematch
-            const updatedRoomSnap = await getDoc(roomRef);
-            const updatedRoomData = updatedRoomSnap.data();
-            if (updatedRoomData.playerXWantsRematch && updatedRoomData.playerOWantsRematch) {
-                const newStarter = updatedRoomData.lastStarter === 'X' ? 'O' : 'X';
-                await updateDoc(roomRef, {
-                    board: Array(9).fill(null),
-                    turn: newStarter,
-                    status: 'playing',
-                    winner: null,
-                    playerXWantsRematch: false,
-                    playerOWantsRematch: false,
-                    lastStarter: newStarter
-                });
-            }
-        };
-
-        async function leaveGame() {
-            if (!currentRoom || !currentUser) return;
-
-            const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
-            const roomSnap = await getDoc(roomRef);
-            if (!roomSnap.exists()) {
-                switchView('menu');
-                return;
-            }
-            const roomData = roomSnap.data();
-
-            const isPlayerX = roomData.playerX === currentUser.uid;
-            const isPlayerO = roomData.playerO === currentUser.uid;
-
-            if (isPlayerX && !roomData.playerO) {
-                await deleteDoc(roomRef);
-            } else {
-                const updates = {};
-                if (isPlayerX) {
-                    updates.playerX = null;
-                    updates.playerXName = null;
-                } else if (isPlayerO) {
-                    updates.playerO = null;
-                    updates.playerOName = null;
-                }
-                updates.status = 'waiting';
-                await updateDoc(roomRef, updates);
-    }
-
-            currentRoom = null;
-            gameData = null;
-            if (unsubscribeGame) {
-                unsubscribeGame();
-                unsubscribeGame = null;
-            }
-            switchView('menu');
-        }
-
-        function startGameListener(code) {
-            if (unsubscribeGame) unsubscribeGame();
-            unsubscribeGame = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${code}`), (snap) => {
-            if (!snap.exists()) { 
-                log("Room deleted or does not exist.");
-                switchView('menu');
-                if (unsubscribeGame) unsubscribeGame();
-                currentRoom = null;
-                return; 
-            }
-            gameData = snap.data();
-
-            // Handle player leaving
-            window.addEventListener('beforeunload', () => {
-                if (currentRoom && currentUser && gameData) {
-                    const roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', `room_${currentRoom}`);
-                    const isPlayerX = gameData.playerX === currentUser.uid;
-                    
-                    if (isPlayerX && !gameData.playerO) {
-                        // If only player X is in the room, delete it on leaving
-                        deleteDoc(roomRef);
-                    }
-                }
-            });
-
-            updateUI(gameData);
-            if (gameData.status === 'playing' && document.getElementById('view-lobby').classList.contains('hidden') === false) {
-                switchView('game');
-            }
-        });
-    }        function listenForRooms() {
-            if (unsubscribeRooms) unsubscribeRooms();
-            const roomsCollection = collection(db, 'artifacts', appId, 'public', 'data', 'rooms');
-            unsubscribeRooms = onSnapshot(roomsCollection, (snapshot) => {
-                const roomList = document.getElementById('room-list');
-                roomList.innerHTML = '';
-                snapshot.forEach((doc) => {
-                    const room = doc.data();
-                    const roomCode = doc.id.replace('room_', '');
-                    if (room.status === 'waiting' && !room.playerO) {
-                        const roomItem = document.createElement('div');
-                        roomItem.className = 'room-item';
-                        roomItem.onclick = () => {
-                            document.getElementById('join-code-input').value = roomCode;
-                            joinRoom();
-                        };
-
-                        const nameEl = document.createElement('span');
-                        nameEl.className = 'room-item-name';
-                        nameEl.textContent = `${room.playerXName || 'Anonymous'}'s Room`;
-                        
-                        const playersEl = document.createElement('span');
-                        playersEl.className = 'room-item-players';
-                        playersEl.textContent = '1/2 Players';
-
-                        roomItem.appendChild(nameEl);
-                        roomItem.appendChild(playersEl);
-                        roomList.appendChild(roomItem);
-                    }
-                });
-                if (roomList.innerHTML === '') {
-                    roomList.innerHTML = '<p style="padding: 1rem; text-align: center; color: #64748b;">No available rooms.</p>';
-                }
-            });
-        }
-
-        function updateUI(data) {
-            if (!currentUser) return;
-            document.getElementById('game-room-code').textContent = currentRoom;
-            const isX = data.playerX === currentUser?.uid;
-            const isO = data.playerO === currentUser?.uid;
-            const mySym = isX ? 'X' : (isO ? 'O' : null);
-            
-            document.getElementById('p1-indicator').textContent = `${data.playerXName || 'Player 1'} (X) ${isX ? '(You)' : ''}`;
-            document.getElementById('p2-indicator').textContent = `${data.playerOName || 'Player 2'} (O) ${isO ? '(You)' : ''}`;
-            document.getElementById('p1-score').textContent = data.playerXWins || 0;
-            document.getElementById('p2-score').textContent = data.playerOWins || 0;
-
-            const boardEl = document.getElementById('board');
-            boardEl.innerHTML = '';
-            data.board.forEach((c, i) => {
-                const b = document.createElement('button');
-                b.className = `cell ${c||''}`;
-                b.textContent = c||'';
-                b.disabled = !!c || data.status !== 'playing' || data.turn !== mySym;
-                b.onclick = () => makeMove(i);
-                boardEl.appendChild(b);
-            });
-
-            const status = document.getElementById('game-status');
-            if (data.status === 'finished') {
-                status.textContent = data.winner==='DRAW'?"Draw!":(data.winner===mySym?"You Won!":"You Lost!");
-                document.getElementById('game-controls').classList.remove('hidden');
-            }
-            else if (data.status === 'playing') {
-                status.textContent = data.turn===mySym?"Your Turn":"Opponent's Turn";
-                document.getElementById('game-controls').classList.add('hidden');
-            }
-            else status.textContent = "Waiting for opponent...";
-
-            const rematchStatus = document.getElementById('rematch-status');
-            if (data.status === 'finished') {
-                const youWantRematch = (isX && data.playerXWantsRematch) || (isO && data.playerOWantsRematch);
-                const opponentWantsRematch = (isX && data.playerOWantsRematch) || (isO && data.playerXWantsRematch);
-
-                if (youWantRematch && !opponentWantsRematch) {
-                    rematchStatus.textContent = "Waiting for opponent to accept rematch...";
-                } else if (!youWantRematch && opponentWantsRematch) {
-                    rematchStatus.textContent = "Opponent wants a rematch!";
-                } else {
-                    rematchStatus.textContent = "";
-                }
-            } else {
-                rematchStatus.textContent = "";
-            }
-        }
-    </script>
+    <!-- Load JavaScript Application -->
+    <script type="module" src="js/app.js"></script>
 </body>
 </html>
