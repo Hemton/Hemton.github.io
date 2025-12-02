@@ -2,13 +2,423 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bit Division Sort - Algorithm Analysis</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Theme Configuration: Vibrant Blue & Electric Green Palette -->
+    <!-- 
+        Palette: "Tech Velocity"
+        Primary Dark: #111827 (Gray 900)
+        Primary Blue: #2563EB (Blue 600)
+        Vibrant Cyan: #06B6D4 (Cyan 500)
+        Electric Green: #10B981 (Emerald 500)
+        Alert Red: #EF4444 (Red 500)
+        Background: #F3F4F6 (Gray 100)
+    -->
+    <style>
+        body { font-family: 'Roboto', sans-serif; background-color: #F3F4F6; color: #1F2937; }
+        
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        /* Custom Utilities for Diagram connectors */
+        .connector-line {
+            width: 2px;
+            background-color: #9CA3AF;
+            margin: 0 auto;
+        }
+        
+        /* Card Hover Effects */
+        .info-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+        }
+        .info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Binary Bit Styling */
+        .bit-box {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+    <!-- 
+        DATA INTEGRATION PLAN:
+        1. Parse the Java code logic (Binary Quick Sort / MSB Radix Sort).
+        2. Visual: Flowchart of the 'if' condition (Bit Check).
+        3. Visual: Simulation of the first partition on the given array.
+        4. Data: Complexity O(N*B) vs O(N log N).
+        5. Justification: Using Bar Chart for complexity to show scale difference.
+        
+        NO SVG USED. NO MERMAID JS USED.
+    -->
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- HEADER SECTION -->
+    <header class="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-12 shadow-xl">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-5xl md:text-6xl font-black mb-4 tracking-tight">BIT DIVISION SORT</h1>
+            <p class="text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto">
+                An In-Place, MSB Radix Sort Algorithm
+            </p>
+            <div class="mt-8 flex justify-center gap-4 flex-wrap">
+                <span class="bg-blue-800 bg-opacity-50 px-4 py-2 rounded-full border border-blue-400 text-sm font-semibold">
+                    <span class="mr-2">🚀</span> O(N × Bits)
+                </span>
+                <span class="bg-blue-800 bg-opacity-50 px-4 py-2 rounded-full border border-blue-400 text-sm font-semibold">
+                    <span class="mr-2">💾</span> In-Place
+                </span>
+                <span class="bg-blue-800 bg-opacity-50 px-4 py-2 rounded-full border border-blue-400 text-sm font-semibold">
+                    <span class="mr-2">🔢</span> Integer Only
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT GRID -->
+    <main class="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-12 gap-8">
+
+        <!-- SECTION 1: WHAT IS IT? -->
+        <section class="col-span-1 md:col-span-12 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-8 border-l-8 border-cyan-500">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">What is Bit Division Sort?</h2>
+                <p class="text-lg text-gray-600 leading-relaxed mb-6">
+                    The provided algorithm is a variation of <strong>Quick Sort</strong> that uses <strong>bits</strong> instead of a pivot element to partition the array. It is formally known as <strong>Binary Quick Sort</strong> or <strong>In-Place MSB Radix Sort</strong>.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-blue-50 p-6 rounded-lg">
+                        <h3 class="font-bold text-blue-800 text-xl mb-2">Core Concept</h3>
+                        <p class="text-gray-700">
+                            Instead of comparing numbers to each other (like <code class="bg-blue-100 px-1 rounded">if a > b</code>), it checks specific <strong>bits</strong> in the binary representation. It starts at the Most Significant Bit (MSB) and groups numbers into two buckets:
+                        </p>
+                        <ul class="mt-4 space-y-2">
+                            <li class="flex items-center"><span class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold mr-3">0</span> Numbers with the bit 0 (Left Side)</li>
+                            <li class="flex items-center"><span class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center font-bold mr-3">1</span> Numbers with the bit 1 (Right Side)</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <h3 class="font-bold text-gray-800 text-xl mb-2">The Java Implementation</h3>
+                        <pre class="bg-gray-800 text-green-400 p-4 rounded text-sm overflow-x-auto"><code>if ((arr[inStart] & (1 << bits)) != 0) {
+    swap(arr, inStart, inEnd);
+    inEnd--;
+} else {
+    inStart++;
+}</code></pre>
+                        <p class="text-sm text-gray-500 mt-2">
+                            This core loop moves "1-bit" numbers to the end and keeps "0-bit" numbers at the start.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: VISUAL TRACE (The Working Mechanism) -->
+        <section class="col-span-1 md:col-span-12 lg:col-span-8">
+            <div class="bg-white rounded-xl shadow-md p-8 h-full">
+                <div class="border-b-2 border-gray-100 pb-4 mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Visual Execution Trace</h2>
+                    <p class="text-gray-500 mt-1">Tracing the algorithm on the provided array at <strong class="text-blue-600">Bit 6</strong> (Value 64).</p>
+                </div>
+
+                <!-- Step 1: Initial State -->
+                <div class="mb-8">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">1. Input Array</h3>
+                    <div class="flex flex-wrap gap-2 justify-center bg-gray-100 p-4 rounded-lg">
+                        <!-- Array Elements -->
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">42</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">17</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">89</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">5</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">33</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">71</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">24</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">60</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">9</div></div>
+                        <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">56</div></div>
+                    </div>
+                </div>
+
+                <!-- Step 2: The Mask Logic -->
+                <div class="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
+                    <h3 class="text-sm font-bold text-blue-500 uppercase tracking-wide mb-4">2. The Filter Mechanism (Bit 6)</h3>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-8">
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-gray-800 mb-1">64</div>
+                            <div class="font-mono text-sm bg-gray-800 text-green-400 px-2 py-1 rounded">0100 0000</div>
+                            <div class="text-xs text-gray-500 mt-1">Mask (1 << 6)</div>
+                        </div>
+                        <div class="text-3xl text-gray-300">➜</div>
+                        <div class="text-left max-w-xs">
+                            <p class="mb-2 text-sm"><strong>The Rule:</strong></p>
+                            <p class="text-sm">Is <code class="bg-white px-1 border rounded">number & 64</code> non-zero?</p>
+                            <ul class="text-sm mt-2 space-y-1">
+                                <li class="text-emerald-600 font-bold">No (0) → Stay Left</li>
+                                <li class="text-red-600 font-bold">Yes (64) → Swap to Right</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Result -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">3. Partition Result (Level 1)</h3>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <!-- Left Bucket -->
+                        <div class="flex-1 bg-emerald-50 border-2 border-emerald-200 rounded-lg p-4 relative">
+                            <div class="absolute -top-3 left-4 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded uppercase">Bit 6 is 0 (< 64)</div>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">42</span>
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">17</span>
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">5</span>
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">33</span>
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">24</span>
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">60</span>
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">9</span>
+                                <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">56</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Bucket -->
+                        <div class="w-full md:w-1/4 bg-red-50 border-2 border-red-200 rounded-lg p-4 relative">
+                            <div class="absolute -top-3 left-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded uppercase">Bit 6 is 1 (≥ 64)</div>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <span class="bg-white border border-red-300 px-2 py-1 rounded font-mono text-red-800">89</span>
+                                <span class="bg-white border border-red-300 px-2 py-1 rounded font-mono text-red-800">71</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-center text-gray-500 mt-4 italic">
+                        The algorithm then recursively calls itself on the Green and Red buckets using Bit 5 (32).
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: TIME COMPLEXITY (Chart) -->
+        <section class="col-span-1 md:col-span-12 lg:col-span-4 flex flex-col gap-8">
+            <div class="bg-white rounded-xl shadow-md p-6 flex-grow">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Performance</h2>
+                <p class="text-sm text-gray-600 mb-6">
+                    Comparison between standard Merge/Quick Sort and Bit Division Sort for integers.
+                </p>
+                
+                <!-- Chart Container -->
+                <div class="chart-container">
+                    <canvas id="complexityChart"></canvas>
+                </div>
+
+                <div class="mt-4 space-y-3">
+                    <div class="flex justify-between text-sm border-b border-gray-100 pb-2">
+                        <span class="text-gray-500">Best Case</span>
+                        <span class="font-mono font-bold text-blue-600">O(N × B)</span>
+                    </div>
+                    <div class="flex justify-between text-sm border-b border-gray-100 pb-2">
+                        <span class="text-gray-500">Worst Case</span>
+                        <span class="font-mono font-bold text-blue-600">O(N × B)</span>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2">
+                        * Where N is array length and B is number of bits (e.g., 32).
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-indigo-900 to-purple-800 rounded-xl shadow-md p-6 text-white">
+                <h3 class="font-bold text-lg mb-2">Space Complexity</h3>
+                <div class="text-4xl font-black mb-2 text-emerald-400">O(B)</div>
+                <p class="text-indigo-200 text-sm">
+                    The space complexity is determined by the recursion stack depth, which is equal to the number of bits (B). It does not require auxiliary arrays.
+                </p>
+            </div>
+        </section>
+
+        <!-- SECTION 4: PROS & CONS -->
+        <section class="col-span-1 md:col-span-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-8 border-indigo-600 pl-4">Advantages & Limitations</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Advantages -->
+                <div class="bg-white rounded-xl shadow-md p-6 info-card border-t-4 border-emerald-500">
+                    <h3 class="text-xl font-bold text-emerald-700 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">👍</span> Advantages
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <span class="bg-emerald-100 text-emerald-800 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-1">1</span>
+                            <p class="text-gray-700"><strong>Linear-ish Time:</strong> Does not depend on comparisons. Can be faster than O(N log N) when N is very large and bits (B) is small.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="bg-emerald-100 text-emerald-800 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-1">2</span>
+                            <p class="text-gray-700"><strong>In-Place:</strong> Uses the existing array for partitioning, saving memory compared to standard Radix Sort.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="bg-emerald-100 text-emerald-800 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-1">3</span>
+                            <p class="text-gray-700"><strong>Cache Friendly:</strong> Access patterns are sequential during the partition scan.</p>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Limitations -->
+                <div class="bg-white rounded-xl shadow-md p-6 info-card border-t-4 border-red-500">
+                    <h3 class="text-xl font-bold text-red-700 mb-4 flex items-center">
+                        <span class="text-2xl mr-2">👎</span> Limitations
+                    </h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-start">
+                            <span class="bg-red-100 text-red-800 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-1">1</span>
+                            <p class="text-gray-700"><strong>Data Type Restricted:</strong> Only works effectively on integers or data with direct binary representation.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="bg-red-100 text-red-800 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-1">2</span>
+                            <p class="text-gray-700"><strong>Unstable:</strong> The swapping mechanism (seen in the code) changes the relative order of equal elements.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="bg-red-100 text-red-800 rounded-full w-6 h-6 flex items-center justify-center text-xs mr-3 mt-1">3</span>
+                            <p class="text-gray-700"><strong>Recursion Overhead:</strong> Deep recursion for 32-bit or 64-bit integers can add function call overhead.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: CONCLUSION -->
+        <section class="col-span-1 md:col-span-12 mt-4 text-center">
+            <div class="bg-gray-800 rounded-xl p-8 text-white shadow-lg">
+                <h2 class="text-2xl font-bold mb-2">Conclusion</h2>
+                <p class="max-w-2xl mx-auto text-gray-300">
+                    The <strong>Bit Division Sort</strong> is a powerful algorithm for specific use cases involving integer sorting. While less generic than QuickSort, it leverages the fundamental binary nature of computers to organize data efficiently.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-900 text-gray-500 py-8 text-center text-sm">
+        <p>Generated based on user-provided Java Algorithm • Canvas Infographics</p>
+    </footer>
+
+    <!-- Chart.js Logic -->
+    <script>
+        // Data Preparation
+        const complexityLabels = ['Small N (100)', 'Medium N (10k)', 'Large N (1M)'];
+        // Approximations for visualization: N*logN vs N*B (assuming B=32)
+        const logNData = [100 * Math.log2(100), 10000 * Math.log2(10000), 1000000 * Math.log2(1000000)];
+        const bitData = [100 * 32, 10000 * 32, 1000000 * 32];
+
+        // Label Wrapping Helper (Requirement Check)
+        function wrapLabels(labels) {
+            return labels.map(label => {
+                if (label.length > 16) {
+                    const words = label.split(' ');
+                    const lines = [];
+                    let currentLine = words[0];
+                    for (let i = 1; i < words.length; i++) {
+                        if (currentLine.length + 1 + words[i].length <= 16) {
+                            currentLine += ' ' + words[i];
+                        } else {
+                            lines.push(currentLine);
+                            currentLine = words[i];
+                        }
+                    }
+                    lines.push(currentLine);
+                    return lines;
+                }
+                return label;
+            });
+        }
+
+        const ctx = document.getElementById('complexityChart').getContext('2d');
+        const complexityChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: wrapLabels(complexityLabels),
+                datasets: [
+                    {
+                        label: 'Standard Sort (N log N)',
+                        data: logNData, // Conceptual comparison data
+                        backgroundColor: '#9CA3AF', // Gray for comparison
+                        borderColor: '#4B5563',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Bit Division Sort (N * 32)',
+                        data: bitData,
+                        backgroundColor: '#2563EB', // Blue for our algorithm
+                        borderColor: '#1E40AF',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        type: 'logarithmic', // Log scale to handle the massive growth of N
+                        title: {
+                            display: true,
+                            text: 'Operations (Log Scale)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Input Size (N)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(tooltipItems) {
+                                const item = tooltipItems[0];
+                                let label = item.chart.data.labels[item.dataIndex];
+                                if (Array.isArray(label)) {
+                                    return label.join(' ');
+                                } else {
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tic Tac Toe - The Hexas</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body> -->
     <!-- Setup Required Modal -->
-    <div id="config-modal">
+    <!-- <div id="config-modal">
         <h2>⚠️ SETUP REQUIRED ⚠️</h2>
         <p>You have not configured the game yet.</p>
         <p>1. Go to <a href="https://console.firebase.google.com/" target="_blank" style="color:#4f46e5;">Firebase Console</a><br>
@@ -16,57 +426,57 @@
         3. Copy the "const firebaseConfig = {...}" block.<br>
         4. Edit <b>config/firebase.js</b> and update the configuration.</p>
         <p>The game will not run without this API Key.</p>
-    </div>
+    </div> -->
 
     <!-- Theme Toggle -->
-    <div class="theme-toggle-container">
+    <!-- <div class="theme-toggle-container">
         <button id="theme-toggle">🌙</button>
-    </div>
+    </div> -->
 
     <!-- Main Container -->
-    <div class="container">
+    <!-- <div class="container"> -->
         <!-- Name Entry View -->
-        <div id="view-name" class="card">
+        <!-- <div id="view-name" class="card">
             <h2>Enter Your Name</h2>
             <input type="text" id="name-input" placeholder="Your Name" maxlength="20">
             <button class="btn-primary" onclick="setPlayerName()">Continue</button>
-        </div>
+        </div> -->
 
         <!-- Main Menu View -->
-        <div id="view-menu" class="card hidden">
+        <!-- <div id="view-menu" class="card hidden">
             <h1>Tic Tac Toe</h1>
             <p class="subtitle">www.thehexas.com</p>
             <button class="btn-primary" onclick="createRoom()">Create Room</button>
             <button class="btn-secondary" onclick="switchView('join')">Join Room</button>
             <div id="room-list-container">
                 <h2>Available Rooms</h2>
-                <div id="room-list">
+                <div id="room-list"> -->
                     <!-- Room list will be populated here -->
-                </div>
+                <!-- </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- Join Room View -->
-        <div id="view-join" class="card hidden">
+        <!-- <div id="view-join" class="card hidden">
             <h2>Join Game</h2>
             <p class="subtitle">Enter the room code</p>
             <input type="text" id="join-code-input" placeholder="XXX-XX-XXX" maxlength="11">
             <div id="join-error" class="error"></div>
             <button class="btn-primary" onclick="joinRoom()">Join</button>
             <button class="btn-secondary" onclick="switchView('menu')">Back</button>
-        </div>
+        </div> -->
 
         <!-- Lobby View -->
-        <div id="view-lobby" class="card hidden">
+        <!-- <div id="view-lobby" class="card hidden">
             <h2>Room Created</h2>
             <div class="code-display" id="lobby-code">...</div>
             <p class="subtitle">Share this code with your friend</p>
             <div class="status-badge">Waiting for opponent...</div>
             <button class="btn-secondary" onclick="location.reload()">Cancel</button>
-        </div>
+        </div> -->
 
         <!-- Game View -->
-        <div id="view-game" class="card hidden">
+        <!-- <div id="view-game" class="card hidden">
             <div id="game-status" class="status-badge">Connecting...</div>
             <div class="board" id="board"></div>
             <div class="player-indicators">
@@ -83,15 +493,15 @@
                 <p id="rematch-status"></p>
             </div>
             <div class="room-info">Room: <span id="game-room-code"></span></div>
-        </div>
+        </div> -->
 
         <!-- Debug Log (hidden by default) -->
-        <div id="debug-log">
+        <!-- <div id="debug-log">
             <div class="log-entry">System initializing...</div>
         </div>
-    </div>
+    </div> -->
 
     <!-- Load JavaScript Application -->
-    <script type="module" src="js/app.js"></script>
-</body>
+    <!-- <script type="module" src="js/app.js"></script>
+</body> -->
 </html>
