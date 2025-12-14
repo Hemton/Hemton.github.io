@@ -3,13 +3,722 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bit Division Sort - Algorithm Analysis</title>
+    <title>The Career Adventure Story</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Neutrals with Gentle Accents 
+         Background: Warm Off-White/Cream (#FEFAE0)
+         Primary Text: Soft Dark Brown (#4A403A)
+         Accents: Muted Teal (#606C38), Soft Terracotta (#BC6C25)
+    -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'story-bg': '#FEFAE0',
+                        'story-dark': '#283618',
+                        'story-green': '#606C38',
+                        'story-earth': '#BC6C25',
+                        'story-cream': '#DDA15E',
+                        'bubble-user': '#E9EDC9',
+                        'bubble-narrator': '#FAEDCD'
+                    },
+                    fontFamily: {
+                        'story': ['Fredoka', 'sans-serif'],
+                        'body': ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #FEFAE0;
+        }
+        .story-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FEFAE0; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #DDA15E; 
+            border-radius: 4px;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #BC6C25;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-story-bg text-story-dark min-h-screen flex flex-col items-center">
+
+    <!-- Application Structure Plan:
+         1. Intro Screen: Sets the funny tone, invites user to start.
+         2. Chat Interface (The Story): 
+            - Central container for dialogue.
+            - Narrator (Uncle Prerna) tells a story about "Chintu".
+            - Questions are injected naturally as comparisons ("Chintu did X, what about you?").
+            - Input areas change based on question type (Buttons, Text).
+         3. Summary Dashboard (The Report): 
+            - Appears after story completion.
+            - Visualizes "Career Clarity" and "Resource Awareness" using charts.
+            - Displays a summary of the collected answers for the user to review.
+         
+         Rationale: 
+         - The source file is a dry questionnaire. 
+         - A "Story Mode" reduces anxiety and social desirability bias (students give standard answers to authority figures).
+         - By projecting onto a character ("Chintu"), the student feels less judged.
+    -->
+
+    <!-- Header -->
+    <header class="w-full max-w-4xl p-4 flex justify-between items-center bg-story-green text-white rounded-b-xl shadow-lg z-10">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-story-earth rounded-full flex items-center justify-center text-xl">🎓</div>
+            <h1 class="story-font text-xl md:text-2xl font-bold">Career Quest: The Tale of Chintu</h1>
+        </div>
+        <div class="text-sm font-semibold opacity-90">Prerna AI Project</div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow w-full max-w-2xl p-4 flex flex-col relative">
+        
+        <!-- INTRO SCREEN -->
+        <div id="intro-screen" class="flex flex-col items-center justify-center h-[80vh] text-center space-y-6 fade-in">
+            <div class="w-32 h-32 bg-story-cream rounded-full flex items-center justify-center text-6xl shadow-xl animate-bounce">
+                🦁
+            </div>
+            <h2 class="story-font text-3xl md:text-4xl text-story-dark font-bold">Hello, Future Legend!</h2>
+            <p class="text-lg md:text-xl max-w-md mx-auto text-gray-700">
+                I'm <strong>Uncle Prerna</strong>. I have a hilarious story to tell you about a boy named <strong>Chintu</strong> who wanted to become a "Professional Cloud Watcher."
+            </p>
+            <p class="text-md text-gray-600 italic">
+                (I might need your help to finish the story!)
+            </p>
+            <button onclick="startStory()" class="px-8 py-4 bg-story-earth hover:bg-yellow-600 text-white font-bold rounded-full shadow-lg transform transition hover:scale-105 story-font text-xl">
+                Let's Hear It! 🚀
+            </button>
+        </div>
+
+        <!-- CHAT INTERFACE -->
+        <div id="chat-interface" class="hidden flex flex-col h-[85vh] bg-white rounded-xl shadow-2xl border-2 border-story-green overflow-hidden">
+            <!-- Messages Area -->
+            <div id="messages-container" class="flex-grow overflow-y-auto p-4 space-y-4 bg-story-bg">
+                <!-- Messages will be injected here -->
+            </div>
+
+            <!-- Input Area -->
+            <div id="input-area" class="p-4 bg-white border-t border-gray-200">
+                <!-- Dynamic Inputs injected here -->
+                <div class="text-center text-gray-400 text-sm">Waiting for narrator...</div>
+            </div>
+        </div>
+
+        <!-- RESULTS DASHBOARD -->
+        <div id="results-dashboard" class="hidden w-full space-y-8 pb-12">
+            <div class="bg-white p-6 rounded-xl shadow-xl border-t-4 border-story-earth">
+                <h2 class="story-font text-3xl text-center mb-2">🎉 The End!</h2>
+                <p class="text-center text-gray-600 mb-6">Thanks for sharing your story while listening to Chintu's. Here is your Career Snapshot.</p>
+                
+                <!-- Visualization: Career Readiness -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Chart 1: Readiness Score -->
+                    <div class="bg-story-bg p-4 rounded-lg shadow-inner">
+                        <h3 class="font-bold text-center mb-2 story-font">Your Career Readiness</h3>
+                        <p class="text-xs text-center text-gray-500 mb-2">Based on awareness & clarity</p>
+                        <div class="chart-container">
+                            <canvas id="readinessChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart 2: Interests Breakdown -->
+                    <div class="bg-story-bg p-4 rounded-lg shadow-inner">
+                        <h3 class="font-bold text-center mb-2 story-font">Your Resource Awareness</h3>
+                        <p class="text-xs text-center text-gray-500 mb-2">Knowledge of tools & help</p>
+                        <div class="chart-container">
+                            <canvas id="awarenessChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Summary of Answers -->
+                <div class="bg-blue-50 p-6 rounded-xl">
+                    <h3 class="story-font text-xl mb-4 border-b-2 border-blue-200 pb-2">Your Personal Profile</h3>
+                    <div id="summary-text" class="grid grid-cols-1 gap-4 text-sm md:text-base">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button onclick="window.print()" class="px-6 py-2 bg-story-green text-white rounded-full hover:bg-green-700 transition">Save My Profile (PDF)</button>
+                    <button onclick="location.reload()" class="ml-4 px-6 py-2 border-2 border-story-earth text-story-earth rounded-full hover:bg-story-earth hover:text-white transition">Start Over</button>
+                </div>
+            </div>
+
+            <!-- Section Explainer -->
+            <div class="bg-white p-6 rounded-xl shadow text-sm text-gray-500">
+                <h4 class="font-bold mb-2">About this Session</h4>
+                <p>This interactive session was designed based on the <em>Prerna AI Questionnaire</em>. Instead of a standard interview, we used a narrative approach to help you explore your demographics, family influences, academic interests, and career goals in a low-pressure environment.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    
+    <script>
+        // --- DATA STORE ---
+        const state = {
+            step: 0,
+            userName: "Friend",
+            responses: {
+                q1_demographics: {},
+                q2_family: {},
+                q3_subjects: {},
+                q4_stream: {},
+                q5_career: {},
+                q6_iti: "",
+                q7_scholarship: "",
+                q8_digital: {},
+                q9_questions: ""
+            },
+            scores: {
+                clarity: 0, // 0-10
+                awareness: 0 // 0-10
+            }
+        };
+
+        // --- STORY SCRIPT ---
+        // A sequence of narrator lines and user interaction requirements
+        const script = [
+            {
+                // Step 0: Intro / Name
+                narrator: ["So, Chintu was a funny kid. He once tried to eat soup with a fork because he wanted to be 'different'.", "Before we go on, I can't keep calling you 'Stranger'. What's your name?"],
+                type: "text",
+                key: "name",
+                placeholder: "Type your name...",
+                btnText: "That's me!",
+                saveTo: (val) => state.userName = val
+            },
+            {
+                // Step 1: Q1 Age/Gender/Siblings
+                narrator: [(name) => `Nice to meet you, ${name}!`, "So Chintu was 15 years old. He had 2 older sisters who bossed him around constantly.", "How about you? How old are you, and do you have any siblings making your life 'interesting'?"],
+                type: "form-q1", // Custom form for demographic
+                saveTo: (val) => state.responses.q1_demographics = val
+            },
+            {
+                // Step 2: Q2 Parents/Decision Making
+                narrator: ["Chintu's dad was a farmer, and his mom was a teacher. His mom made ALL the decisions. If she said 'Eat Karela', Chintu ate Karela.", "Who is the 'Boss' in your house regarding your studies? And what do your parents do?"],
+                type: "form-q2",
+                saveTo: (val) => state.responses.q2_family = val
+            },
+            {
+                // Step 3: Q3 Subjects
+                narrator: ["School time! Chintu HATED Math. He thought numbers were alien symbols. But he loved History because he liked stories.", "What about you? Which subject makes you feel like a genius, and which one makes you want to nap?"],
+                type: "form-q3",
+                saveTo: (val) => state.responses.q3_subjects = val
+            },
+            {
+                // Step 4: Q4 Stream Choice
+                narrator: ["Because Chintu loved stories, he wanted to take the Arts stream.", "But his neighbor, Sharma Uncle, told him 'Science is best!'. Chintu was confused.", "If you had to pick right now, what would you study next? Why?"],
+                type: "form-q4",
+                saveTo: (val) => state.responses.q4_stream = val
+            },
+            {
+                // Step 5: Q5 Career/Teacher Influence
+                narrator: ["Chintu actually secretly wanted to be a Photographer. He saw a movie about it once. No teacher ever told him it was a real job!", "Do you have a dream job? And did a teacher ever explain career options to you?"],
+                type: "form-q5",
+                saveTo: (val) => state.responses.q5_career = val
+            },
+            {
+                // Step 6: Q6 ITI Awareness
+                narrator: ["One day, Chintu found a pamphlet about 'ITI Diploma Courses'. He thought it was a new ice cream brand.", "Be honest, do you know what ITI courses are? Or are you like Chintu?"],
+                type: "options",
+                options: [
+                    { text: "I have no idea 🤷‍♂️", value: "No Awareness", score: 0 },
+                    { text: "Heard the name, that's it", value: "Low Awareness", score: 1 },
+                    { text: "Yes, technical skills training!", value: "High Awareness", score: 2 }
+                ],
+                saveTo: (val) => {
+                    state.responses.q6_iti = val.value;
+                    state.scores.awareness += val.score;
+                }
+            },
+            {
+                // Step 7: Q7 Scholarships
+                narrator: ["Chintu worried about money for college. Then he found out about Government Scholarships! Free money for studying!", "Do you know how to apply for scholarships, or do you need a treasure map?"],
+                type: "options",
+                options: [
+                    { text: "I know how to apply! ✅", value: "Aware & Applied", score: 2 },
+                    { text: "I know they exist, but not how to apply", value: "Aware but Unskilled", score: 1 },
+                    { text: "Wait, there are scholarships? 😲", value: "Unaware", score: 0 }
+                ],
+                saveTo: (val) => {
+                    state.responses.q7_scholarship = val.value;
+                    state.scores.awareness += val.score;
+                }
+            },
+            {
+                // Step 8: Q8 Digital Access
+                narrator: ["Chintu finally got a smartphone! He mostly used it for reels... but sometimes for Google.", "Do you have your own phone? And be honest, do you use it to learn stuff or just for fun?"],
+                type: "form-q8",
+                saveTo: (val) => state.responses.q8_digital = val
+            },
+            {
+                // Step 9: Q9 Questions
+                narrator: ["Chintu's story ended well. He found a counselor who listened.", "We are almost done. Do you have any questions for me? About careers, life, or why pizza is round?"],
+                type: "text",
+                placeholder: "Ask me anything...",
+                btnText: "Finish Story",
+                saveTo: (val) => state.responses.q9_questions = val
+            },
+            {
+                // End
+                narrator: ["Thanks for chatting! You seem much smarter than Chintu.", "Let's look at your Career Profile."],
+                type: "end"
+            }
+        ];
+
+        // --- CORE FUNCTIONS ---
+
+        function startStory() {
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('chat-interface').classList.remove('hidden');
+            document.getElementById('chat-interface').classList.add('fade-in');
+            
+            nextStep();
+        }
+
+        async function nextStep() {
+            const stepData = script[state.step];
+            
+            if (stepData.type === 'end') {
+                showResults();
+                return;
+            }
+
+            // 1. Process Narrator Lines
+            const lines = stepData.narrator.map(line => 
+                typeof line === 'function' ? line(state.userName) : line
+            );
+
+            // Hide input during narration
+            const inputArea = document.getElementById('input-area');
+            inputArea.innerHTML = '<div class="typing-indicator my-2"><span></span><span></span><span></span></div>';
+
+            for (let i = 0; i < lines.length; i++) {
+                await addMessage('narrator', lines[i]);
+                await wait(1000 + (lines[i].length * 10)); // Dynamic delay based on reading length
+            }
+
+            // 2. Render Input
+            renderInput(stepData);
+            
+            // Scroll to bottom
+            const container = document.getElementById('messages-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderInput(stepData) {
+            const container = document.getElementById('input-area');
+            container.innerHTML = ''; // Clear loading
+
+            if (stepData.type === 'text') {
+                container.innerHTML = `
+                    <div class="flex gap-2">
+                        <input type="text" id="userInput" class="flex-grow p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-story-green" placeholder="${stepData.placeholder}">
+                        <button onclick="handleInput()" class="bg-story-earth text-white px-6 py-2 rounded-lg font-bold hover:bg-yellow-700 transition">${stepData.btnText || 'Send'}</button>
+                    </div>
+                `;
+                // Enter key support
+                document.getElementById('userInput').addEventListener("keypress", function(event) {
+                    if (event.key === "Enter") handleInput();
+                });
+
+            } else if (stepData.type === 'options') {
+                const btnContainer = document.createElement('div');
+                btnContainer.className = "flex flex-wrap justify-center gap-3";
+                stepData.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "px-4 py-2 bg-story-green text-white rounded-full hover:bg-green-700 transition shadow-sm text-sm md:text-base";
+                    btn.innerText = opt.text;
+                    btn.onclick = () => handleOption(opt);
+                    btnContainer.appendChild(btn);
+                });
+                container.appendChild(btnContainer);
+
+            } else if (stepData.type === 'form-q1') {
+                // Custom form for Age/Siblings
+                container.innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <input id="inp-age" type="number" placeholder="Your Age" class="p-2 border rounded">
+                        <select id="inp-siblings" class="p-2 border rounded">
+                            <option value="">Siblings?</option>
+                            <option value="None">None</option>
+                            <option value="1-2">1-2</option>
+                            <option value="3+">3+</option>
+                        </select>
+                        <input id="inp-gender" type="text" placeholder="Your Gender" class="p-2 border rounded col-span-2">
+                    </div>
+                    <button onclick="handleFormQ1()" class="w-full mt-2 bg-story-earth text-white py-2 rounded font-bold">Submit</button>
+                `;
+            } else if (stepData.type === 'form-q2') {
+                // Parents & Decisions
+                container.innerHTML = `
+                    <div class="space-y-2 text-sm">
+                        <input id="inp-dad" placeholder="Father's Occupation" class="w-full p-2 border rounded">
+                        <input id="inp-mom" placeholder="Mother's Occupation" class="w-full p-2 border rounded">
+                        <label class="block text-gray-600 font-bold mt-1">Who decides for you?</label>
+                        <select id="inp-decision" class="w-full p-2 border rounded">
+                            <option value="Parents">Parents mostly</option>
+                            <option value="Me">I decide!</option>
+                            <option value="Together">We decide together</option>
+                            <option value="Relatives">Relatives interfere :(</option>
+                        </select>
+                    </div>
+                    <button onclick="handleFormQ2()" class="w-full mt-2 bg-story-earth text-white py-2 rounded font-bold">Next</button>
+                `;
+            } else if (stepData.type === 'form-q3') {
+                // Subjects
+                container.innerHTML = `
+                    <div class="space-y-2 text-sm">
+                        <input id="inp-fav" placeholder="Subject you LOVE ❤️" class="w-full p-2 border rounded">
+                        <input id="inp-hate" placeholder="Subject you DISLIKE 💔" class="w-full p-2 border rounded">
+                    </div>
+                    <button onclick="handleFormQ3()" class="w-full mt-2 bg-story-earth text-white py-2 rounded font-bold">Continue</button>
+                `;
+            } else if (stepData.type === 'form-q4') {
+                // Stream
+                container.innerHTML = `
+                    <div class="space-y-2 text-sm">
+                        <select id="inp-stream" class="w-full p-2 border rounded">
+                            <option value="">Select Stream</option>
+                            <option value="Science">Science (PCM/PCB)</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Arts">Arts/Humanities</option>
+                            <option value="Vocational">Vocational/Diploma</option>
+                        </select>
+                        <input id="inp-why" placeholder="Why this stream?" class="w-full p-2 border rounded">
+                    </div>
+                    <button onclick="handleFormQ4()" class="w-full mt-2 bg-story-earth text-white py-2 rounded font-bold">Lock Choice</button>
+                `;
+            } else if (stepData.type === 'form-q5') {
+                // Career
+                container.innerHTML = `
+                    <div class="space-y-2 text-sm">
+                        <input id="inp-job" placeholder="Dream Job?" class="w-full p-2 border rounded">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" id="inp-teacher">
+                            <label for="inp-teacher">A teacher explained careers to me</label>
+                        </div>
+                    </div>
+                    <button onclick="handleFormQ5()" class="w-full mt-2 bg-story-earth text-white py-2 rounded font-bold">Dream Big</button>
+                `;
+            } else if (stepData.type === 'form-q8') {
+                // Digital
+                container.innerHTML = `
+                    <div class="space-y-2 text-sm">
+                        <select id="inp-phone" class="w-full p-2 border rounded">
+                            <option value="Personal Phone">I have my own phone</option>
+                            <option value="Family Phone">I share family phone</option>
+                            <option value="No Phone">No phone access</option>
+                        </select>
+                        <select id="inp-usage" class="w-full p-2 border rounded">
+                            <option value="Entertainment">Mostly Fun/Social Media</option>
+                            <option value="Education">Mostly Study/YouTube Learning</option>
+                            <option value="Both">Mix of Both</option>
+                        </select>
+                    </div>
+                    <button onclick="handleFormQ8()" class="w-full mt-2 bg-story-earth text-white py-2 rounded font-bold">Connect</button>
+                `;
+            }
+        }
+
+        // --- HANDLERS ---
+
+        function handleInput() {
+            const val = document.getElementById('userInput').value;
+            if (!val) return;
+            saveAndNext(val, val);
+        }
+
+        function handleOption(opt) {
+            saveAndNext(opt.text, opt);
+        }
+
+        // Custom Form Handlers
+        function handleFormQ1() {
+            const age = document.getElementById('inp-age').value;
+            const sib = document.getElementById('inp-siblings').value;
+            const gen = document.getElementById('inp-gender').value;
+            if (!age || !sib || !gen) return alert("Please fill all details!");
+            
+            const display = `I'm ${age}, ${gen}, siblings: ${sib}`;
+            const data = { age, siblings: sib, gender: gen };
+            saveAndNext(display, data);
+        }
+
+        function handleFormQ2() {
+            const dad = document.getElementById('inp-dad').value;
+            const mom = document.getElementById('inp-mom').value;
+            const decision = document.getElementById('inp-decision').value;
+            if(!dad || !mom) return alert("Fill parents info!");
+
+            const display = `Dad: ${dad}, Mom: ${mom}, Decider: ${decision}`;
+            const data = { father: dad, mother: mom, decision_maker: decision };
+            saveAndNext(display, data);
+        }
+
+        function handleFormQ3() {
+            const fav = document.getElementById('inp-fav').value;
+            const hate = document.getElementById('inp-hate').value;
+            if(!fav || !hate) return alert("Fill subjects!");
+            
+            const display = `Love ${fav}, Hate ${hate}`;
+            const data = { favorite: fav, difficult: hate };
+            // Simple scoring logic: If they have a fav subject, +1 clarity
+            state.scores.clarity += 1;
+            saveAndNext(display, data);
+        }
+
+        function handleFormQ4() {
+            const stream = document.getElementById('inp-stream').value;
+            const why = document.getElementById('inp-why').value;
+            if(!stream) return alert("Pick a stream!");
+            
+            const display = `${stream} because ${why}`;
+            const data = { stream, reason: why };
+             // Simple scoring logic: If they chose a stream, +1 clarity
+             state.scores.clarity += 1;
+            saveAndNext(display, data);
+        }
+
+        function handleFormQ5() {
+            const job = document.getElementById('inp-job').value;
+            const teacher = document.getElementById('inp-teacher').checked;
+            
+            const display = `Dream: ${job}. Teacher helped? ${teacher ? 'Yes' : 'No'}`;
+            const data = { dream_job: job, teacher_guidance: teacher };
+            if(job && job.length > 2) state.scores.clarity += 2;
+            if(teacher) state.scores.awareness += 1;
+            saveAndNext(display, data);
+        }
+
+        function handleFormQ8() {
+            const phone = document.getElementById('inp-phone').value;
+            const usage = document.getElementById('inp-usage').value;
+            
+            const display = `${phone}, Use for: ${usage}`;
+            const data = { access: phone, usage: usage };
+            if(phone !== "No Phone") state.scores.awareness += 1; // Access to info
+            if(usage === "Education" || usage === "Both") state.scores.clarity += 1; // Using tools for learning
+            saveAndNext(display, data);
+        }
+
+        async function saveAndNext(displayText, dataValue) {
+            // Save data
+            const stepData = script[state.step];
+            if (stepData.saveTo) {
+                stepData.saveTo(dataValue);
+            }
+
+            // Show User Bubble
+            addMessage('user', displayText);
+
+            // Increment Step
+            state.step++;
+            
+            // Wait a beat then load next
+            await wait(500);
+            nextStep();
+        }
+
+        function addMessage(sender, text) {
+            return new Promise(resolve => {
+                const container = document.getElementById('messages-container');
+                const div = document.createElement('div');
+                div.className = `flex w-full ${sender === 'user' ? 'justify-end' : 'justify-start'} mb-2 fade-in`;
+                
+                const bubble = document.createElement('div');
+                bubble.className = `max-w-[80%] p-3 rounded-2xl text-sm md:text-base shadow-sm ${
+                    sender === 'user' 
+                    ? 'bg-bubble-user text-right rounded-tr-none' 
+                    : 'bg-bubble-narrator text-left rounded-tl-none border border-amber-100'
+                }`;
+                
+                // Add Icon
+                const icon = sender === 'narrator' ? '🦁 ' : '';
+                bubble.innerHTML = `<strong>${icon}</strong> ${text}`;
+                
+                div.appendChild(bubble);
+                container.appendChild(div);
+                
+                // Scroll
+                container.scrollTop = container.scrollHeight;
+
+                // Tiny delay for visual effect
+                setTimeout(resolve, 300);
+            });
+        }
+
+        function wait(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        // --- RESULTS & CHARTS ---
+
+        function showResults() {
+            document.getElementById('chat-interface').classList.add('hidden');
+            document.getElementById('results-dashboard').classList.remove('hidden');
+            document.getElementById('results-dashboard').classList.add('fade-in');
+
+            // Render Text Summary
+            const r = state.responses;
+            const s = document.getElementById('summary-text');
+            s.innerHTML = `
+                <div class="p-3 bg-white rounded shadow-sm border-l-4 border-story-green">
+                    <strong>Demographics:</strong> ${state.userName}, ${r.q1_demographics.age} years old (${r.q1_demographics.gender}).
+                </div>
+                <div class="p-3 bg-white rounded shadow-sm border-l-4 border-story-earth">
+                    <strong>Family Influence:</strong> Decisions mostly by ${r.q2_family.decision_maker}. Father: ${r.q2_family.father}, Mother: ${r.q2_family.mother}.
+                </div>
+                <div class="p-3 bg-white rounded shadow-sm border-l-4 border-blue-400">
+                    <strong>Academics:</strong> Loves ${r.q3_subjects.favorite}, struggles with ${r.q3_subjects.difficult}. Aiming for ${r.q4_stream} stream.
+                </div>
+                <div class="p-3 bg-white rounded shadow-sm border-l-4 border-purple-400">
+                    <strong>Career Goal:</strong> "${r.q5_career.dream_job}".
+                </div>
+                <div class="p-3 bg-white rounded shadow-sm border-l-4 border-yellow-400">
+                    <strong>Awareness:</strong> ITI Knowledge: ${r.q6_iti}. Scholarship Knowledge: ${r.q7_scholarship}.
+                </div>
+                <div class="p-3 bg-white rounded shadow-sm border-l-4 border-gray-400">
+                    <strong>Digital Access:</strong> ${r.q8_digital.access}, used for ${r.q8_digital.usage}.
+                </div>
+            `;
+
+            // Charts
+            renderCharts();
+        }
+
+        function renderCharts() {
+            // Chart 1: Clarity (Goal setting, subject knowledge)
+            // Normalized out of 5 roughly
+            const clarityScore = state.scores.clarity; 
+            
+            new Chart(document.getElementById('readinessChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Career Clarity', 'Exploration Needed'],
+                    datasets: [{
+                        data: [clarityScore, 5 - clarityScore],
+                        backgroundColor: ['#606C38', '#E9EDC9'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label === 'Career Clarity' 
+                                        ? `Score: ${context.raw} (Higher is better)` 
+                                        : '';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Awareness (ITI, Scholarship, Phone use)
+            const awarenessScore = state.scores.awareness;
+
+            new Chart(document.getElementById('awarenessChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Current Awareness', 'Max Potential'],
+                    datasets: [{
+                        label: 'Resource Knowledge Score',
+                        data: [awarenessScore, 5],
+                        backgroundColor: ['#BC6C25', '#DDA15E'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 6 }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bit Division Sort - Algorithm Analysis</title> -->
+    <!-- Tailwind CSS -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <!-- Chart.js -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <!-- <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap" rel="stylesheet"> -->
 
     <!-- Theme Configuration: Vibrant Blue & Electric Green Palette -->
     <!-- 
@@ -21,7 +730,7 @@
         Alert Red: #EF4444 (Red 500)
         Background: #F3F4F6 (Gray 100)
     -->
-    <style>
+    <!-- <style>
         body { font-family: 'Roboto', sans-serif; background-color: #F3F4F6; color: #1F2937; }
         
         /* Chart Container Strict Styling */
@@ -55,7 +764,7 @@
         .bit-box {
             font-family: 'Courier New', monospace;
         }
-    </style>
+    </style> -->
     <!-- 
         DATA INTEGRATION PLAN:
         1. Parse the Java code logic (Binary Quick Sort / MSB Radix Sort).
@@ -66,11 +775,11 @@
         
         NO SVG USED. NO MERMAID JS USED.
     -->
-</head>
-<body class="overflow-x-hidden">
+<!-- </head>
+<body class="overflow-x-hidden"> -->
 
     <!-- HEADER SECTION -->
-    <header class="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-12 shadow-xl">
+    <!-- <header class="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-12 shadow-xl">
         <div class="container mx-auto px-4 text-center">
             <h1 class="text-5xl md:text-6xl font-black mb-4 tracking-tight">BIT DIVISION SORT</h1>
             <p class="text-xl md:text-2xl font-light text-blue-100 max-w-3xl mx-auto">
@@ -88,13 +797,13 @@
                 </span>
             </div>
         </div>
-    </header>
+    </header> -->
 
     <!-- MAIN CONTENT GRID -->
-    <main class="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-12 gap-8">
+    <!-- <main class="container mx-auto px-4 py-12 grid grid-cols-1 md:grid-cols-12 gap-8"> -->
 
         <!-- SECTION 1: WHAT IS IT? -->
-        <section class="col-span-1 md:col-span-12 mb-8">
+        <!-- <section class="col-span-1 md:col-span-12 mb-8">
             <div class="bg-white rounded-xl shadow-md p-8 border-l-8 border-cyan-500">
                 <h2 class="text-3xl font-bold text-gray-800 mb-4">What is Bit Division Sort?</h2>
                 <p class="text-lg text-gray-600 leading-relaxed mb-6">
@@ -125,18 +834,18 @@
                     </div>
                 </div>
             </div>
-        </section>
+        </section> -->
 
         <!-- SECTION 2: VISUAL TRACE (The Working Mechanism) -->
-        <section class="col-span-1 md:col-span-12 lg:col-span-8">
+        <!-- <section class="col-span-1 md:col-span-12 lg:col-span-8">
             <div class="bg-white rounded-xl shadow-md p-8 h-full">
                 <div class="border-b-2 border-gray-100 pb-4 mb-6">
                     <h2 class="text-3xl font-bold text-gray-800">Visual Execution Trace</h2>
                     <p class="text-gray-500 mt-1">Tracing the algorithm on the provided array at <strong class="text-blue-600">Bit 6</strong> (Value 64).</p>
-                </div>
+                </div> -->
 
                 <!-- Step 1: Initial State -->
-                <div class="mb-8">
+                <!-- <div class="mb-8">
                     <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">1. Input Array</h3>
                     <div class="flex flex-wrap gap-2 justify-center bg-gray-100 p-4 rounded-lg">
                         <!-- Array Elements -->
@@ -151,10 +860,10 @@
                         <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">9</div></div>
                         <div class="flex flex-col items-center"><div class="w-10 h-10 bg-white border-2 border-gray-300 flex items-center justify-center font-bold rounded shadow-sm">56</div></div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Step 2: The Mask Logic -->
-                <div class="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
+                <!-- <div class="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
                     <h3 class="text-sm font-bold text-blue-500 uppercase tracking-wide mb-4">2. The Filter Mechanism (Bit 6)</h3>
                     <div class="flex flex-col md:flex-row items-center justify-center gap-8">
                         <div class="text-center">
@@ -172,10 +881,10 @@
                             </ul>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- Step 3: Result -->
-                <div>
+                <!-- <div>
                     <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">3. Partition Result (Level 1)</h3>
                     <div class="flex flex-col md:flex-row gap-4">
                         <!-- Left Bucket -->
@@ -191,10 +900,10 @@
                                 <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">9</span>
                                 <span class="bg-white border border-emerald-300 px-2 py-1 rounded font-mono text-emerald-800">56</span>
                             </div>
-                        </div>
+                        </div> -->
                         
                         <!-- Right Bucket -->
-                        <div class="w-full md:w-1/4 bg-red-50 border-2 border-red-200 rounded-lg p-4 relative">
+                        <!-- <div class="w-full md:w-1/4 bg-red-50 border-2 border-red-200 rounded-lg p-4 relative">
                             <div class="absolute -top-3 left-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded uppercase">Bit 6 is 1 (≥ 64)</div>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 <span class="bg-white border border-red-300 px-2 py-1 rounded font-mono text-red-800">89</span>
@@ -207,10 +916,10 @@
                     </p>
                 </div>
             </div>
-        </section>
+        </section> -->
 
         <!-- SECTION 3: TIME COMPLEXITY (Chart) -->
-        <section class="col-span-1 md:col-span-12 lg:col-span-4 flex flex-col gap-8">
+        <!-- <section class="col-span-1 md:col-span-12 lg:col-span-4 flex flex-col gap-8">
             <div class="bg-white rounded-xl shadow-md p-6 flex-grow">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Performance</h2>
                 <p class="text-sm text-gray-600 mb-6">
@@ -244,10 +953,10 @@
                     The space complexity is determined by the recursion stack depth, which is equal to the number of bits (B). It does not require auxiliary arrays.
                 </p>
             </div>
-        </section>
+        </section> -->
 
         <!-- SECTION 4: PROS & CONS -->
-        <section class="col-span-1 md:col-span-12">
+        <!-- <section class="col-span-1 md:col-span-12">
             <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-8 border-indigo-600 pl-4">Advantages & Limitations</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Advantages -->
@@ -269,10 +978,10 @@
                             <p class="text-gray-700"><strong>Cache Friendly:</strong> Access patterns are sequential during the partition scan.</p>
                         </li>
                     </ul>
-                </div>
+                </div> -->
 
                 <!-- Limitations -->
-                <div class="bg-white rounded-xl shadow-md p-6 info-card border-t-4 border-red-500">
+                <!-- <div class="bg-white rounded-xl shadow-md p-6 info-card border-t-4 border-red-500">
                     <h3 class="text-xl font-bold text-red-700 mb-4 flex items-center">
                         <span class="text-2xl mr-2">👎</span> Limitations
                     </h3>
@@ -292,10 +1001,10 @@
                     </ul>
                 </div>
             </div>
-        </section>
+        </section> -->
 
         <!-- SECTION 5: CONCLUSION -->
-        <section class="col-span-1 md:col-span-12 mt-4 text-center">
+        <!-- <section class="col-span-1 md:col-span-12 mt-4 text-center">
             <div class="bg-gray-800 rounded-xl p-8 text-white shadow-lg">
                 <h2 class="text-2xl font-bold mb-2">Conclusion</h2>
                 <p class="max-w-2xl mx-auto text-gray-300">
@@ -308,10 +1017,10 @@
 
     <footer class="bg-gray-900 text-gray-500 py-8 text-center text-sm">
         <p>Generated based on user-provided Java Algorithm • Canvas Infographics</p>
-    </footer>
+    </footer> -->
 
     <!-- Chart.js Logic -->
-    <script>
+    <!-- <script>
         // Data Preparation
         const complexityLabels = ['Small N (100)', 'Medium N (10k)', 'Large N (1M)'];
         // Approximations for visualization: N*logN vs N*B (assuming B=32)
@@ -403,7 +1112,7 @@
         });
     </script>
 </body>
-</html>
+</html> -->
 
 
 
